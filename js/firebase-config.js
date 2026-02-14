@@ -8,12 +8,12 @@ import { getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc, dele
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT.firebasestorage.app",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyAMk6ytOsRIp4ICQRMZrdhQe90-gMEuDDM",
+    authDomain: "ethereal-balance.firebaseapp.com",
+    projectId: "ethereal-balance",
+    storageBucket: "ethereal-balance.firebasestorage.app",
+    messagingSenderId: "1062807553833",
+    appId: "1:1062807553833:web:0e368360755c03d5fe9938"
 };
 
 // Initialize Firebase
@@ -27,7 +27,7 @@ const STRIPE_PUBLISHABLE_KEY = 'pk_live_YOUR_PUBLISHABLE_KEY';
 
 // Cloud Functions base URL
 // Replace with your actual Firebase Cloud Functions URL after deployment
-const FUNCTIONS_BASE_URL = 'https://us-central1-YOUR_PROJECT_ID.cloudfunctions.net';
+const FUNCTIONS_BASE_URL = 'https://us-central1-ethereal-balance.cloudfunctions.net';
 
 // Export everything for use in other modules
 export {
