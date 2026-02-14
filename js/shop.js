@@ -1,7 +1,7 @@
 // ============================================
 // ETHEREAL BALANCE - SHOP MODULE
 // ============================================
-import { db, collection, getDocs, query, where, orderBy } from './firebase-config.js';
+import { db, collection, getDocs } from './firebase-config.js';
 
 let allProducts = [];
 let currentFilter = 'all';
@@ -16,17 +16,26 @@ async function loadProducts() {
     const loading = document.getElementById('shopLoading');
 
     try {
-        const q = query(
-            collection(db, 'products'),
-            where('isActive', '==', true),
-            orderBy('createdAt', 'desc')
-        );
-
-        const snapshot = await getDocs(q);
+        const snapshot = await getDocs(collection(db, 'products'));
         allProducts = [];
 
         snapshot.forEach(doc => {
-            allProducts.push({ id: doc.id, ...doc.data() });
+            const data = doc.data();
+            const isActive = data.isActive === true || data.active === true;
+
+            if (!isActive) return;
+
+            allProducts.push({
+                id: doc.id,
+                ...data,
+                isActive: true
+            });
+        });
+
+        allProducts.sort((a, b) => {
+            const aTime = a.createdAt?.toMillis?.() || 0;
+            const bTime = b.createdAt?.toMillis?.() || 0;
+            return bTime - aTime;
         });
 
         if (loading) loading.classList.add('hidden');
