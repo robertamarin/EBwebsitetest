@@ -3,6 +3,8 @@
 // ============================================
 import { db, collection, getDocs } from './firebase-config.js';
 
+const SHOP_FALLBACK_IMAGE = 'assets/EB.PNG';
+
 let allProducts = [];
 let currentFilter = 'all';
 let currentModalProduct = null;
@@ -21,7 +23,7 @@ async function loadProducts() {
 
         snapshot.forEach(doc => {
             const data = doc.data();
-            const isActive = data.isActive === true || data.active === true;
+            const isActive = data.isActive !== false && data.active !== false;
 
             if (!isActive) return;
 
@@ -96,14 +98,12 @@ function renderProducts(products) {
 
         const badgeHtml = getBadgeHtml(product);
         const categoryLabel = getCategoryLabel(product.category);
-        const mainImage = product.images && product.images.length > 0
-            ? product.images[0]
-            : 'assets/shop/placeholder.jpg';
+        const mainImage = getPrimaryImage(product);
 
         return `
             <div class="product-card stagger-item" data-category="${escapeHtml(product.category)}" style="animation-delay: ${index * 0.1}s">
                 <div class="product-image" onclick="openProductModal('${product.id}')">
-                    <img src="${escapeHtml(mainImage)}" alt="${escapeHtml(product.name)}" loading="lazy">
+                    <img src="${escapeHtml(mainImage)}" alt="${escapeHtml(product.name)}" loading="lazy" onerror="this.onerror=null;this.src='${SHOP_FALLBACK_IMAGE}'">
                     ${badgeHtml}
                     <div class="product-quick-view">
                         <button class="quick-view-btn">Quick View</button>
@@ -162,11 +162,13 @@ window.openProductModal = function(productId) {
     const galleryNav = document.getElementById('productModalGalleryNav');
 
     // Set main image
-    const mainImage = product.images && product.images.length > 0
-        ? product.images[0]
-        : 'assets/shop/placeholder.jpg';
+    const mainImage = getPrimaryImage(product);
     galleryImg.src = mainImage;
     galleryImg.alt = product.name;
+    galleryImg.onerror = () => {
+        galleryImg.onerror = null;
+        galleryImg.src = SHOP_FALLBACK_IMAGE;
+    };
 
     // Gallery dots
     if (product.images && product.images.length > 1) {
@@ -319,7 +321,22 @@ window.closeOrderBanner = function() {
 // UTILITY FUNCTIONS
 // ============================================
 function formatPrice(cents) {
-    return '$' + (cents / 100).toFixed(2);
+    const value = Number(cents);
+    if (!Number.isFinite(value)) return 'Price unavailable';
+    return '$' + (value / 100).toFixed(2);
+}
+
+function getPrimaryImage(product) {
+    if (!product || !Array.isArray(product.images) || product.images.length === 0) {
+        return SHOP_FALLBACK_IMAGE;
+    }
+
+    const raw = String(product.images[0] || '').trim();
+    if (!raw) return SHOP_FALLBACK_IMAGE;
+
+    // Support admin entries like "Mat.png" by treating them as local assets.
+    const isAbsolute = /^https?:\/\//i.test(raw) || raw.startsWith('/') || raw.startsWith('./') || raw.startsWith('../');
+    return isAbsolute ? raw : `assets/${raw}`;
 }
 
 function getCategoryLabel(category) {
