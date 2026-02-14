@@ -120,6 +120,16 @@ function renderProducts(products) {
             </div>
         `;
     }).join('');
+
+    // Product cards are injected after page-level observers are initialized,
+    // so activate stagger items here to avoid cards staying hidden.
+    requestAnimationFrame(() => {
+        grid.querySelectorAll('.stagger-item').forEach((item, index) => {
+            setTimeout(() => {
+                item.classList.add('active');
+            }, index * 100);
+        });
+    });
 }
 
 // ============================================
