@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin | Ethereal Balance</title>
+    <link rel="icon" href="assets/EB(1).svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="admin-login" id="adminLogin">
+        <div class="admin-login-card">
+            <img src="assets/EB(1).svg" alt="Ethereal Balance" class="admin-logo">
+            <h1>Admin Portal</h1>
+            <form id="adminLoginForm">
+                <input type="email" id="adminEmail" placeholder="Email" required autocomplete="email">
+                <input type="password" id="adminPassword" placeholder="Password" required autocomplete="current-password">
+                <button type="submit">Sign In</button>
+                <p class="admin-error" id="adminError"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="admin-dashboard" id="adminDashboard" style="display:none;">
+        <!-- Mobile Toggle -->
+        <button class="admin-mobile-toggle" id="adminMobileToggle" onclick="toggleAdminSidebar()">&#9776;</button>
+
+        <!-- Sidebar -->
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="admin-sidebar-logo">
+                <img src="assets/EB(1).svg" alt="Logo">
+                <span>Admin</span>
+            </div>
+            <nav class="admin-nav">
+                <button class="admin-nav-item active" data-section="overview" onclick="switchAdminSection('overview')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                    Overview
+                </button>
+                <button class="admin-nav-item" data-section="products" onclick="switchAdminSection('products')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+                    Products
+                </button>
+                <button class="admin-nav-item" data-section="orders" onclick="switchAdminSection('orders')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>
+                    Orders
+                </button>
+                <button class="admin-nav-item" data-section="settings" onclick="switchAdminSection('settings')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                    Settings
+                </button>
+            </nav>
+            <button class="admin-logout" onclick="adminLogout()">Sign Out</button>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- OVERVIEW SECTION -->
+            <div class="admin-section" id="sectionOverview">
+                <h2>Dashboard</h2>
+                <div class="admin-stats-grid" id="adminStats"></div>
+                <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; margin-bottom: 20px;">Recent Orders</h3>
+                <div class="admin-table-container" id="adminRecentOrders">
+                    <p style="padding: 40px; text-align: center; color: var(--stone);">Loading...</p>
+                </div>
+            </div>
+
+            <!-- PRODUCTS SECTION -->
+            <div class="admin-section" id="sectionProducts" style="display:none;">
+                <div class="admin-section-header">
+                    <h2>Products</h2>
+                    <button class="btn-admin-primary" onclick="openProductEditor()">+ Add Product</button>
+                </div>
+                <div class="admin-table-container" id="adminProductsTable">
+                    <p style="padding: 40px; text-align: center; color: var(--stone);">Loading...</p>
+                </div>
+            </div>
+
+            <!-- ORDERS SECTION -->
+            <div class="admin-section" id="sectionOrders" style="display:none;">
+                <h2>Orders</h2>
+                <div class="admin-orders-filters">
+                    <select id="orderStatusFilter" onchange="loadOrders()">
+                        <option value="all">All Statuses</option>
+                        <option value="paid">Paid</option>
+                        <option value="fulfilled">Fulfilled</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="refunded">Refunded</option>
+                    </select>
+                </div>
+                <div class="admin-table-container" id="adminOrdersTable">
+                    <p style="padding: 40px; text-align: center; color: var(--stone);">Loading...</p>
+                </div>
+            </div>
+
+            <!-- SETTINGS SECTION -->
+            <div class="admin-section" id="sectionSettings" style="display:none;">
+                <h2>Store Settings</h2>
+                <div class="admin-settings-form">
+                    <form id="storeSettingsForm" onsubmit="saveSettings(event)">
+                        <div class="admin-form-group">
+                            <label>Shipping Rate (USD)</label>
+                            <input type="number" id="settingShippingRate" step="0.01" min="0" placeholder="9.99">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Free Shipping Threshold (USD)</label>
+                            <input type="number" id="settingFreeShipping" step="0.01" min="0" placeholder="100.00">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Tax Rate (%)</label>
+                            <input type="number" id="settingTaxRate" step="0.01" min="0" max="100" placeholder="0">
+                        </div>
+                        <div class="admin-form-group">
+                            <div class="admin-toggle">
+                                <label class="admin-toggle-switch">
+                                    <input type="checkbox" id="settingStoreEnabled" checked>
+                                    <span class="admin-toggle-slider"></span>
+                                </label>
+                                <span style="font-size: 0.9rem; color: var(--charcoal);">Store Enabled</span>
+                            </div>
+                        </div>
+                        <div class="admin-form-actions">
+                            <button type="submit" class="btn-admin-primary">Save Settings</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Product Editor Modal -->
+    <div class="admin-modal-overlay" id="productEditorModal" style="display:none;">
+        <div class="admin-modal">
+            <button class="admin-modal-close" onclick="closeProductEditor()">&times;</button>
+            <h2 id="productEditorTitle">Add Product</h2>
+            <form id="productEditorForm" onsubmit="saveProduct(event)">
+                <input type="hidden" id="productEditId" value="">
+
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label>Product Name</label>
+                        <input type="text" id="productName" required placeholder="Luxury Pilates Mat">
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Price (USD)</label>
+                        <input type="number" id="productPrice" step="0.01" min="0" required placeholder="189.00">
+                    </div>
+                </div>
+
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label>Category</label>
+                        <select id="productCategory" required>
+                            <option value="physical">Physical Product</option>
+                            <option value="digital">Digital Product</option>
+                            <option value="service">Service</option>
+                        </select>
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Subcategory</label>
+                        <input type="text" id="productSubcategory" placeholder="e.g., mats, guides, sessions">
+                    </div>
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Description</label>
+                    <textarea id="productDescription" placeholder="Describe the product..."></textarea>
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Image URLs (comma-separated)</label>
+                    <input type="text" id="productImages" placeholder="https://... , https://...">
+                </div>
+
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label>Inventory (-1 for unlimited)</label>
+                        <input type="number" id="productInventory" min="-1" value="-1">
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Compare-at Price (USD, optional)</label>
+                        <input type="number" id="productComparePrice" step="0.01" min="0" placeholder="249.00">
+                    </div>
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Details (one per line)</label>
+                    <textarea id="productDetails" placeholder="Premium eco-friendly materials&#10;Non-slip grip surface&#10;Includes carrying strap"></textarea>
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Digital File URL (for digital products)</label>
+                    <input type="text" id="productDigitalUrl" placeholder="https://storage.googleapis.com/...">
+                </div>
+
+                <div class="admin-form-check">
+                    <input type="checkbox" id="productActive" checked>
+                    <label for="productActive">Active (visible in shop)</label>
+                </div>
+
+                <div class="admin-form-check">
+                    <input type="checkbox" id="productFeatured">
+                    <label for="productFeatured">Featured</label>
+                </div>
+
+                <div class="admin-form-actions">
+                    <button type="button" class="btn-admin-secondary" onclick="closeProductEditor()">Cancel</button>
+                    <button type="submit" class="btn-admin-primary">Save Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Order Detail Modal -->
+    <div class="admin-modal-overlay" id="orderDetailModal" style="display:none;">
+        <div class="admin-modal">
+            <button class="admin-modal-close" onclick="closeOrderDetail()">&times;</button>
+            <div id="orderDetailContent"></div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="admin-toast" id="adminToast"></div>
+
+    <script type="module" src="js/admin.js"></script>
+</body>
+</html>
