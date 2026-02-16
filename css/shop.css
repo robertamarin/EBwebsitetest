@@ -42,7 +42,7 @@
 
 /* Filter Tabs */
 .shop-filters {
-    display: flex;
+    display: none;
     justify-content: center;
     gap: 12px;
     margin-bottom: 50px;
@@ -78,8 +78,9 @@
 /* Product Grid */
 .shop-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 320px));
     gap: 30px;
+    justify-content: center;
 }
 
 /* Product Card */
@@ -264,8 +265,9 @@
 /* Shop Loading Skeleton */
 .shop-loading {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 320px));
     gap: 30px;
+    justify-content: center;
 }
 
 .shop-loading.hidden {
@@ -1079,5 +1081,12 @@
 
     .shop-loading {
         grid-template-columns: 1fr;
+    }
+}
+
+
+@media (max-width: 680px) {
+    .shop-grid {
+        grid-template-columns: minmax(0, 1fr);
     }
 }

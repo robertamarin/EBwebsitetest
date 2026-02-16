@@ -53,6 +53,10 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
                     Gallery
                 </button>
+                <button class="admin-nav-item" data-section="partners" onclick="switchAdminSection('partners')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6"/><path d="M23 11h-6"/></svg>
+                    Partners
+                </button>
                 <button class="admin-nav-item" data-section="orders" onclick="switchAdminSection('orders')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>
                     Orders
@@ -125,6 +129,31 @@
                 </div>
                 <div class="admin-table-container" id="adminOrdersTable">
                     <p style="padding: 40px; text-align: center; color: var(--stone);">Loading...</p>
+                </div>
+            </div>
+
+            <!-- PARTNERS SECTION -->
+            <div class="admin-section" id="sectionPartners" style="display:none;">
+                <h2>Partners</h2>
+                <div class="admin-settings-form" style="max-width: 760px;">
+                    <form id="partnersForm" onsubmit="savePartner(event)">
+                        <div class="admin-form-row">
+                            <div class="admin-form-group">
+                                <label>Partner Name</label>
+                                <input type="text" id="partnerName" required placeholder="Example Partner">
+                            </div>
+                            <div class="admin-form-group">
+                                <label>Partner Website URL</label>
+                                <input type="url" id="partnerUrl" required placeholder="https://example.com">
+                            </div>
+                        </div>
+                        <div class="admin-form-actions">
+                            <button type="submit" class="btn-admin-primary">Add Partner</button>
+                        </div>
+                    </form>
+                    <div class="admin-table-container" id="adminPartnersTable" style="margin-top: 24px;">
+                        <p style="padding: 24px; text-align: center; color: var(--stone);">Loading partners...</p>
+                    </div>
                 </div>
             </div>
 

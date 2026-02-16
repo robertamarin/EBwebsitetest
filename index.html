@@ -131,6 +131,14 @@
             display: flex;
             gap: 40px;
             list-style: none;
+            align-items: center;
+            flex-wrap: nowrap;
+        }
+
+        .nav-links li {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
         }
 
         .nav-links a {
@@ -165,6 +173,7 @@
             padding: 12px 28px !important;
             border-radius: 30px;
             transition: all 0.3s ease;
+            white-space: nowrap;
         }
 
         .nav-cta::after {
@@ -1491,12 +1500,26 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 10px 24px;
             font-size: 0.9rem;
             color: var(--stone);
         }
 
         /* Responsive */
         @media (max-width: 1200px) {
+            .nav-links {
+                gap: 20px;
+            }
+
+            .nav-links a {
+                font-size: 0.8rem;
+            }
+
+            .nav-cta {
+                padding: 10px 20px !important;
+            }
+
             .events-layout {
                 grid-template-columns: 1fr;
             }
@@ -3200,29 +3223,6 @@
             position: relative;
         }
 
-        /* Nav Link Hover Animation Enhanced */
-        .nav-links a {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .nav-links a::before {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to top, rgba(156, 175, 136, 0.1), transparent);
-            transform: translateY(100%);
-            transition: transform 0.3s ease;
-            z-index: -1;
-        }
-
-        .nav-links a:hover::before {
-            transform: translateY(0);
-        }
-
         /* Footer Link Hover */
         .footer-links a {
             position: relative;
@@ -3233,6 +3233,19 @@
         .footer-links a:hover {
             color: var(--sage-light);
             transform: translateX(5px);
+        }
+
+        .footer-admin-link {
+            font-size: 0.78rem;
+            color: rgba(255, 255, 255, 0.55);
+            text-decoration: none;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            transition: color 0.25s ease;
+        }
+
+        .footer-admin-link:hover {
+            color: rgba(255, 255, 255, 0.85);
         }
 
         /* About Image Parallax */
@@ -3483,13 +3496,6 @@
                 </p>
             </div>
 
-            <div class="shop-filters reveal">
-                <button class="shop-filter-btn active" data-filter="all" onclick="filterProducts('all')">All</button>
-                <button class="shop-filter-btn" data-filter="physical" onclick="filterProducts('physical')">Products</button>
-                <button class="shop-filter-btn" data-filter="digital" onclick="filterProducts('digital')">Digital</button>
-                <button class="shop-filter-btn" data-filter="service" onclick="filterProducts('service')">Services</button>
-            </div>
-
             <div class="shop-grid" id="shopGrid"></div>
 
             <div class="shop-loading" id="shopLoading">
@@ -3698,7 +3704,7 @@
                     See all Partners
                 </button>
                 <div class="partners-list-wrapper" id="partnersListWrapper">
-                    <ul class="partners-list">
+                    <ul class="partners-list" id="partnersList">
                         <li><a href="https://roamhomeware.com/" target="_blank" rel="noopener">Roam Homeware</a></li>
                         <li><a href="https://stayorli.com/" target="_blank" rel="noopener">Orli Hotel (Orli La Jolla)</a></li>
                         <li><a href="https://luciaaviara.com/" target="_blank" rel="noopener">Lucia at Aviara</a></li>
@@ -3909,6 +3915,7 @@
             <div class="footer-bottom">
                 <p>© 2026 Ethereal Balance. All rights reserved.</p>
                 <p>Privacy Policy · Terms of Service</p>
+                <a href="admin.html" class="footer-admin-link" aria-label="Admin login">Admin Login</a>
             </div>
         </div>
     </footer>
@@ -4047,6 +4054,15 @@
                 console.log('Gallery Firestore fetch skipped, using static data:', e.message);
             }
 
+            try {
+                const partnersSnap = await getDocs(collection(db, 'partners'));
+                window._firestorePartners = partnersSnap.docs
+                    .map(doc => doc.data())
+                    .filter(p => p && p.name && p.url);
+            } catch (e) {
+                console.log('Partners Firestore fetch skipped, using static data:', e.message);
+            }
+
             // Re-render with Firestore data
             if (typeof window.renderEvents === 'function') {
                 window.renderEvents();
@@ -4054,6 +4070,9 @@
             }
             if (typeof window.renderGalleryFromData === 'function') {
                 window.renderGalleryFromData();
+            }
+            if (typeof window.renderPartnersList === 'function') {
+                window.renderPartnersList();
             }
             return true;
         })();
@@ -4186,6 +4205,30 @@
             menu.classList.toggle('active');
             document.body.style.overflow = menu.classList.contains('active') ? 'hidden' : '';
         }
+
+        function renderPartnersList() {
+            const list = document.getElementById('partnersList');
+            if (!list) return;
+
+            // Remove previously injected items so hardcoded partners always remain.
+            list.querySelectorAll('[data-source="custom"]').forEach(el => el.remove());
+
+            const customPartners = Array.isArray(window._firestorePartners) ? window._firestorePartners : [];
+            customPartners.forEach(partner => {
+                const li = document.createElement('li');
+                li.dataset.source = 'custom';
+                const a = document.createElement('a');
+                a.href = partner.url;
+                a.target = '_blank';
+                a.rel = 'noopener';
+                a.textContent = partner.name;
+                li.appendChild(a);
+                list.appendChild(li);
+            });
+        }
+
+        window.renderPartnersList = renderPartnersList;
+        renderPartnersList();
 
         const partnersToggle = document.getElementById('partnersToggle');
         const partnersListWrapper = document.getElementById('partnersListWrapper');

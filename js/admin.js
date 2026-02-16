@@ -3,7 +3,7 @@
 // ============================================
 import {
     db, auth, storage,
-    collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
+    collection, doc, getDoc, getDocs, addDoc, setDoc, updateDoc, deleteDoc,
     query, where, orderBy, limit, onSnapshot,
     serverTimestamp, firestoreIncrement,
     signInWithEmailAndPassword, onAuthStateChanged, signOut,
@@ -352,6 +352,7 @@ window.switchAdminSection = function(section) {
         case 'events': loadEvents(); break;
         case 'gallery': loadGalleryItems(); break;
         case 'orders': loadOrders(); break;
+        case 'partners': loadPartners(); break;
         case 'settings': loadSettings(); updateStorageUsage(); break;
     }
 
@@ -1012,6 +1013,7 @@ window.deleteGallery = async function(galleryId, galleryTitle) {
 // ORDERS MANAGEMENT
 // ============================================
 let allAdminOrders = [];
+let allPartners = [];
 
 window.loadOrders = async function() {
     try {
@@ -1229,6 +1231,98 @@ window.saveOrderNotes = async function(orderId) {
 };
 
 // ============================================
+// PARTNERS
+// ============================================
+async function loadPartners() {
+    const table = document.getElementById('adminPartnersTable');
+    if (!table) return;
+
+    table.innerHTML = '<p style="padding: 24px; text-align: center; color: var(--stone);">Loading partners...</p>';
+
+    try {
+        const snap = await getDocs(query(collection(db, 'partners'), orderBy('createdAt', 'desc')));
+        allPartners = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        if (!allPartners.length) {
+            table.innerHTML = '<p style="padding: 24px; text-align: center; color: var(--stone);">No custom partners added yet.</p>';
+            return;
+        }
+
+        table.innerHTML = `
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Website</th>
+                        <th style="text-align:right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${allPartners.map(p => `
+                        <tr>
+                            <td>${escapeHtml(p.name || '')}</td>
+                            <td><a href="${escapeAttr(p.url || '#')}" target="_blank" rel="noopener">${escapeHtml(p.url || '')}</a></td>
+                            <td style="text-align:right;">
+                                <button class="btn-admin-secondary" type="button" onclick="deletePartner('${p.id}')">Delete</button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    } catch (error) {
+        console.error('Error loading partners:', error);
+        table.innerHTML = '<p style="padding: 24px; text-align: center; color: var(--red);">Error loading partners.</p>';
+    }
+}
+
+window.savePartner = async function(e) {
+    e.preventDefault();
+
+    const nameEl = document.getElementById('partnerName');
+    const urlEl = document.getElementById('partnerUrl');
+    if (!nameEl || !urlEl) return;
+
+    const name = nameEl.value.trim();
+    const url = urlEl.value.trim();
+
+    if (!name || !url) {
+        showToast('Please enter partner name and URL', 'error');
+        return;
+    }
+
+    try {
+        await addDoc(collection(db, 'partners'), {
+            name,
+            url,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        });
+
+        nameEl.value = '';
+        urlEl.value = '';
+        showToast('Partner added', 'success');
+        loadPartners();
+    } catch (error) {
+        console.error('Error adding partner:', error);
+        showToast('Error adding partner', 'error');
+    }
+};
+
+window.deletePartner = async function(partnerId) {
+    if (!partnerId) return;
+
+    try {
+        await deleteDoc(doc(db, 'partners', partnerId));
+        showToast('Partner removed', 'success');
+        loadPartners();
+    } catch (error) {
+        console.error('Error deleting partner:', error);
+        showToast('Error deleting partner', 'error');
+    }
+};
+
+// ============================================
 // SETTINGS
 // ============================================
 async function loadSettings() {
@@ -1256,19 +1350,13 @@ window.saveSettings = async function(e) {
 
     try {
         const settingsRef = doc(db, 'settings', 'store');
-        const settingsSnap = await getDoc(settingsRef);
-
         const data = {
             shippingRate: Math.round(shippingRate * 100),
             freeShippingThreshold: Math.round(freeShipping * 100),
             taxRate, storeEnabled, updatedAt: serverTimestamp()
         };
 
-        if (settingsSnap.exists()) {
-            await updateDoc(settingsRef, data);
-        } else {
-            await addDoc(collection(db, 'settings'), data);
-        }
+        await setDoc(settingsRef, data, { merge: true });
 
         showToast('Settings saved', 'success');
     } catch (error) {
