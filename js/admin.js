@@ -1320,6 +1320,18 @@ async function loadPartners() {
         }
 
         allPartners = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        await ensureLegacyPartnersBackfilled(allPartners);
+
+        if (!hasBackfilledLegacyPartners || allPartners.length === 0) {
+            const refreshed = await getDocs(collection(db, 'partners'));
+            allPartners = refreshed.docs.map(d => ({ id: d.id, ...d.data() }));
+        }
+
+        allPartners.sort((a, b) => {
+            const aTime = a.createdAt?.toMillis?.() || 0;
+            const bTime = b.createdAt?.toMillis?.() || 0;
+            return bTime - aTime;
+        });
 
         // Render partners even if backfill writes are blocked by Firestore rules.
         // This prevents the UI from getting stuck in "Error loading partners".
