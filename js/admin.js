@@ -1233,6 +1233,69 @@ window.saveOrderNotes = async function(orderId) {
 // ============================================
 // PARTNERS
 // ============================================
+const LEGACY_SITE_PARTNERS = [
+    { name: 'Roam Homeware', url: 'https://roamhomeware.com/' },
+    { name: 'Orli Hotel (Orli La Jolla)', url: 'https://stayorli.com/' },
+    { name: 'Lucia at Aviara', url: 'https://luciaaviara.com/' },
+    { name: 'SAGO', url: 'https://www.sagoencinitas.com/' },
+    { name: 'LSKD', url: 'https://lskd.com' },
+    { name: 'Wonderland', url: 'https://www.wonderlandob.com/' },
+    { name: 'Studio Casually', url: 'https://www.studiocasually.com/contact' },
+    { name: 'HERO Fitness', url: 'https://heroboardfitness.com' },
+    { name: 'Moniker Coffee Co.', url: 'https://www.monikercoffee.com/' },
+    { name: 'Ocean Pacific Gym & Wellness', url: 'https://www.oceanpacificgym.com/' },
+    { name: 'Trident Coffee', url: 'https://tridentcoffee.com/' },
+    { name: 'LMNT', url: 'https://drinklmnt.com/' },
+    { name: 'Yesly', url: 'https://yeslywater.com/' },
+    { name: 'PNKYS', url: 'https://drinkpnkys.com/' },
+    { name: 'Brogi Mats', url: 'https://brogiyoga.com/' },
+    { name: 'VYB Swim', url: 'https://www.vybswim.com' },
+    { name: 'Brick & Bell', url: 'https://www.instagram.com/brickandbell/?hl=en' },
+    { name: 'Olive Club', url: 'https://oliveclubhouse.com/' },
+    { name: 'Zaytouna Olive Oil', url: 'https://zaytounaoliveoil.com/' },
+    { name: 'Like Air', url: 'https://likeair.com/' },
+    { name: 'Blenders', url: 'https://blenderseyewear.com' },
+    { name: 'SunBum', url: 'https://www.sunbum.com/' },
+    { name: 'ATARAHbody', url: 'https://atarahbody.com/' },
+    { name: 'BUYA', url: 'https://www.instagram.com/buya.designs/?hl=en' },
+    { name: 'Organic Jaguar', url: 'https://organicjaguar.com' },
+    { name: 'Herbs to Acupuncture', url: 'https://www.herbstoacupuncture.com/' },
+    { name: 'SLATE', url: 'https://slatemilk.com' },
+    { name: 'WildSociety', url: 'https://wildsociety.com' }
+];
+
+let hasBackfilledLegacyPartners = false;
+
+async function ensureLegacyPartnersBackfilled(existingPartners) {
+    if (hasBackfilledLegacyPartners) return;
+
+    const existingKeys = new Set(
+        (existingPartners || []).map((p) => `${String(p.name || '').trim().toLowerCase()}|${String(p.url || '').trim().toLowerCase()}`)
+    );
+
+    const missingPartners = LEGACY_SITE_PARTNERS.filter((p) => {
+        const key = `${p.name.trim().toLowerCase()}|${p.url.trim().toLowerCase()}`;
+        return !existingKeys.has(key);
+    });
+
+    if (missingPartners.length === 0) {
+        hasBackfilledLegacyPartners = true;
+        return;
+    }
+
+    await Promise.all(missingPartners.map((partner) =>
+        addDoc(collection(db, 'partners'), {
+            name: partner.name,
+            url: partner.url,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            source: 'legacy-site'
+        })
+    ));
+
+    hasBackfilledLegacyPartners = true;
+}
+
 async function loadPartners() {
     const table = document.getElementById('adminPartnersTable');
     if (!table) return;
@@ -1240,8 +1303,27 @@ async function loadPartners() {
     table.innerHTML = '<p style="padding: 24px; text-align: center; color: var(--stone);">Loading partners...</p>';
 
     try {
-        const snap = await getDocs(query(collection(db, 'partners'), orderBy('createdAt', 'desc')));
+        let snap;
+        try {
+            snap = await getDocs(query(collection(db, 'partners'), orderBy('createdAt', 'desc')));
+        } catch (queryError) {
+            console.warn('Falling back to non-ordered partner query:', queryError);
+            snap = await getDocs(collection(db, 'partners'));
+        }
+
         allPartners = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        await ensureLegacyPartnersBackfilled(allPartners);
+
+        if (!hasBackfilledLegacyPartners || allPartners.length === 0) {
+            const refreshed = await getDocs(collection(db, 'partners'));
+            allPartners = refreshed.docs.map(d => ({ id: d.id, ...d.data() }));
+        }
+
+        allPartners.sort((a, b) => {
+            const aTime = a.createdAt?.toMillis?.() || 0;
+            const bTime = b.createdAt?.toMillis?.() || 0;
+            return bTime - aTime;
+        });
 
         if (!allPartners.length) {
             table.innerHTML = '<p style="padding: 24px; text-align: center; color: var(--stone);">No custom partners added yet.</p>';

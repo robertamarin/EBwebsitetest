@@ -2,6 +2,8 @@
 // ETHEREAL BALANCE - CART MODULE
 // ============================================
 
+const CART_FALLBACK_IMAGE = 'assets/EB.PNG';
+
 const Cart = {
     KEY: 'eb_cart',
 
@@ -26,6 +28,7 @@ const Cart = {
 
         if (existing) {
             existing.quantity += quantity;
+            if (!existing.image) existing.image = getCartImage(product);
         } else {
             cart.items.push({
                 productId: product.id,
@@ -33,7 +36,7 @@ const Cart = {
                 price: product.price,
                 quantity,
                 category: product.category,
-                image: (product.images && product.images[0]) || ''
+                image: getCartImage(product)
             });
         }
 
@@ -125,9 +128,8 @@ const Cart = {
         container.innerHTML = cart.items.map(item => {
             const categoryLabels = { physical: 'Product', digital: 'Digital', service: 'Service' };
             const categoryLabel = categoryLabels[item.category] || item.category;
-            const imageHtml = item.image
-                ? `<img src="${escapeAttr(item.image)}" alt="${escapeAttr(item.name)}">`
-                : '';
+            const resolvedImage = getResolvedImagePath(item.image);
+            const imageHtml = `<img src="${escapeAttr(resolvedImage)}" alt="${escapeAttr(item.name)}" onerror="this.onerror=null;this.src='${CART_FALLBACK_IMAGE}'">`;
 
             return `
                 <div class="cart-item">
@@ -164,6 +166,22 @@ const Cart = {
         document.body.style.overflow = '';
     }
 };
+
+
+function getCartImage(product) {
+    if (!product) return CART_FALLBACK_IMAGE;
+
+    const firstImage = Array.isArray(product.images) ? product.images[0] : '';
+    return getResolvedImagePath(firstImage);
+}
+
+function getResolvedImagePath(rawPath) {
+    const raw = String(rawPath || '').trim();
+    if (!raw) return CART_FALLBACK_IMAGE;
+
+    const isAbsolute = /^https?:\/\//i.test(raw) || raw.startsWith('/') || raw.startsWith('./') || raw.startsWith('../');
+    return isAbsolute ? raw : `assets/${raw}`;
+}
 
 // Utility functions
 function escapeHtml(text) {
