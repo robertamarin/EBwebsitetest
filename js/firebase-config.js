@@ -6,6 +6,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import { getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, orderBy, limit, onSnapshot, serverTimestamp, increment as firestoreIncrement, runTransaction } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject, listAll } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js';
 
 const firebaseConfig = {
     apiKey: "AIzaSyAMk6ytOsRIp4ICQRMZrdhQe90-gMEuDDM",
@@ -20,6 +21,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+const storage = getStorage(app);
 
 // Stripe Configuration
 // Replace with your Stripe publishable key (safe for client-side)
@@ -34,6 +36,12 @@ export {
     app,
     db,
     auth,
+    storage,
+    storageRef,
+    uploadBytes,
+    getDownloadURL,
+    deleteObject,
+    listAll,
     STRIPE_PUBLISHABLE_KEY,
     FUNCTIONS_BASE_URL,
     collection,

@@ -45,6 +45,14 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
                     Products
                 </button>
+                <button class="admin-nav-item" data-section="events" onclick="switchAdminSection('events')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    Events
+                </button>
+                <button class="admin-nav-item" data-section="gallery" onclick="switchAdminSection('gallery')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
+                    Gallery
+                </button>
                 <button class="admin-nav-item" data-section="orders" onclick="switchAdminSection('orders')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>
                     Orders
@@ -80,6 +88,28 @@
                 </div>
             </div>
 
+            <!-- EVENTS SECTION -->
+            <div class="admin-section" id="sectionEvents" style="display:none;">
+                <div class="admin-section-header">
+                    <h2>Events</h2>
+                    <button class="btn-admin-primary" onclick="openEventEditor()">+ Add Event</button>
+                </div>
+                <div class="admin-event-cards" id="adminEventsGrid">
+                    <p style="padding: 40px; text-align: center; color: var(--stone);">Loading...</p>
+                </div>
+            </div>
+
+            <!-- GALLERY SECTION -->
+            <div class="admin-section" id="sectionGallery" style="display:none;">
+                <div class="admin-section-header">
+                    <h2>Gallery</h2>
+                    <button class="btn-admin-primary" onclick="openGalleryEditor()">+ Add Gallery</button>
+                </div>
+                <div class="admin-gallery-grid" id="adminGalleryGrid">
+                    <p style="padding: 40px; text-align: center; color: var(--stone);">Loading...</p>
+                </div>
+            </div>
+
             <!-- ORDERS SECTION -->
             <div class="admin-section" id="sectionOrders" style="display:none;">
                 <h2>Orders</h2>
@@ -101,6 +131,19 @@
             <!-- SETTINGS SECTION -->
             <div class="admin-section" id="sectionSettings" style="display:none;">
                 <h2>Store Settings</h2>
+
+                <!-- Storage Usage -->
+                <div class="storage-usage" id="storageUsageWidget">
+                    <h4>Firebase Storage Usage</h4>
+                    <div class="storage-bar">
+                        <div class="storage-bar-fill" id="storageBarFill" style="width: 0%;"></div>
+                    </div>
+                    <div class="storage-text">
+                        <span id="storageUsedText">Calculating...</span>
+                        <span>5 GB limit</span>
+                    </div>
+                </div>
+
                 <div class="admin-settings-form">
                     <form id="storeSettingsForm" onsubmit="saveSettings(event)">
                         <div class="admin-form-group">
@@ -173,8 +216,16 @@
                 </div>
 
                 <div class="admin-form-group">
-                    <label>Image URLs (comma-separated)</label>
-                    <input type="text" id="productImages" placeholder="https://... , https://...">
+                    <label>Product Images</label>
+                    <div class="image-upload-zone" id="productImageZone">
+                        <input type="file" id="productImageInput" accept="image/jpeg,image/png,image/webp" multiple hidden>
+                        <span class="upload-icon">+</span>
+                        <div class="upload-text">
+                            Drag & drop images or <strong>click to browse</strong>
+                        </div>
+                        <div class="upload-limits">Max 2MB per image. JPG, PNG, WebP. Auto-compressed.</div>
+                    </div>
+                    <div class="image-preview-grid" id="productImagePreview"></div>
                 </div>
 
                 <div class="admin-form-row">
@@ -221,6 +272,151 @@
         <div class="admin-modal">
             <button class="admin-modal-close" onclick="closeOrderDetail()">&times;</button>
             <div id="orderDetailContent"></div>
+        </div>
+    </div>
+
+    <!-- Event Editor Modal -->
+    <div class="admin-modal-overlay" id="eventEditorModal" style="display:none;">
+        <div class="admin-modal">
+            <button class="admin-modal-close" onclick="closeEventEditor()">&times;</button>
+            <h2 id="eventEditorTitle">Add Event</h2>
+            <form id="eventEditorForm" onsubmit="saveEvent(event)">
+                <input type="hidden" id="eventEditId" value="">
+
+                <div class="admin-form-group">
+                    <label>Event Title</label>
+                    <input type="text" id="eventTitle" required placeholder="Sunrise Pilates on the Beach">
+                </div>
+
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label>Date (display text)</label>
+                        <input type="text" id="eventDateDisplay" required placeholder="Mar 15, 2026">
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Date (for sorting)</label>
+                        <input type="date" id="eventDateSort" required>
+                    </div>
+                </div>
+
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label>Time</label>
+                        <input type="text" id="eventTime" placeholder="9:00 AM - 11:00 AM">
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Event Type</label>
+                        <input type="text" id="eventType" placeholder="Workshop, Retreat, etc.">
+                    </div>
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Venue</label>
+                    <input type="text" id="eventVenue" placeholder="The Ritz-Carlton, Miami Beach">
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Description</label>
+                    <textarea id="eventDescription" placeholder="Describe the event..."></textarea>
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Booking Link</label>
+                    <input type="text" id="eventBookingLink" placeholder="https://...">
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Cover Image</label>
+                    <div class="image-upload-zone" id="eventImageZone">
+                        <input type="file" id="eventImageInput" accept="image/jpeg,image/png,image/webp" hidden>
+                        <span class="upload-icon">+</span>
+                        <div class="upload-text">
+                            Drag & drop or <strong>click to browse</strong>
+                        </div>
+                        <div class="upload-limits">Max 2MB. JPG, PNG, WebP. Auto-compressed.</div>
+                    </div>
+                    <div class="image-preview-grid" id="eventImagePreview"></div>
+                </div>
+
+                <div class="admin-form-check">
+                    <input type="checkbox" id="eventActive" checked>
+                    <label for="eventActive">Active (visible on website)</label>
+                </div>
+
+                <div class="admin-form-actions">
+                    <button type="button" class="btn-admin-secondary" onclick="closeEventEditor()">Cancel</button>
+                    <button type="submit" class="btn-admin-primary">Save Event</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Gallery Editor Modal -->
+    <div class="admin-modal-overlay" id="galleryEditorModal" style="display:none;">
+        <div class="admin-modal">
+            <button class="admin-modal-close" onclick="closeGalleryEditor()">&times;</button>
+            <h2 id="galleryEditorTitle">Add Gallery</h2>
+            <form id="galleryEditorForm" onsubmit="saveGallery(event)">
+                <input type="hidden" id="galleryEditId" value="">
+
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label>Gallery Title</label>
+                        <input type="text" id="galleryTitle" required placeholder="Sunrise Retreat 2026">
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Date</label>
+                        <input type="text" id="galleryDate" placeholder="March 2026">
+                    </div>
+                </div>
+
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label>Cover Label</label>
+                        <input type="text" id="galleryCoverLabel" placeholder="Spring Retreat">
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Sort Order</label>
+                        <input type="number" id="gallerySortOrder" min="0" value="0">
+                    </div>
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Cover Image</label>
+                    <div class="image-upload-zone" id="galleryCoverZone">
+                        <input type="file" id="galleryCoverInput" accept="image/jpeg,image/png,image/webp" hidden>
+                        <span class="upload-icon">+</span>
+                        <div class="upload-text">
+                            Drag & drop or <strong>click to browse</strong>
+                        </div>
+                        <div class="upload-limits">Max 2MB. JPG, PNG, WebP. Auto-compressed.</div>
+                    </div>
+                    <div class="image-preview-grid" id="galleryCoverPreview"></div>
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Gallery Photos</label>
+                    <div class="image-upload-zone" id="galleryPhotosZone">
+                        <input type="file" id="galleryPhotosInput" accept="image/jpeg,image/png,image/webp" multiple hidden>
+                        <span class="upload-icon">+</span>
+                        <div class="upload-text">
+                            Drag & drop photos or <strong>click to browse</strong> (multiple)
+                        </div>
+                        <div class="upload-limits">Max 2MB each. JPG, PNG, WebP. Auto-compressed.</div>
+                    </div>
+                    <div class="gallery-photos-list" id="galleryPhotosList"></div>
+                </div>
+
+                <div class="admin-form-check">
+                    <input type="checkbox" id="galleryActive" checked>
+                    <label for="galleryActive">Active (visible on website)</label>
+                </div>
+
+                <div class="admin-form-actions">
+                    <button type="button" class="btn-admin-secondary" onclick="closeGalleryEditor()">Cancel</button>
+                    <button type="submit" class="btn-admin-primary">Save Gallery</button>
+                </div>
+            </form>
         </div>
     </div>
 

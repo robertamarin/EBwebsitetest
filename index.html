@@ -3971,6 +3971,87 @@
     </div>
 
     <script src="events.js"></script>
+    <!-- Firebase SDK for public page (read-only Firestore for events + gallery) -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+        import { getFirestore, collection, getDocs, query, where, orderBy } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAMk6ytOsRIp4ICQRMZrdhQe90-gMEuDDM",
+            authDomain: "ethereal-balance.firebaseapp.com",
+            projectId: "ethereal-balance",
+            storageBucket: "ethereal-balance.firebasestorage.app",
+            messagingSenderId: "1062807553833",
+            appId: "1:1062807553833:web:0e368360755c03d5fe9938"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Fetch Firestore data and re-render when ready
+        window._firestoreReady = (async () => {
+            try {
+                const eventsSnap = await getDocs(query(
+                    collection(db, 'events'),
+                    where('active', '==', true),
+                    orderBy('date', 'asc')
+                ));
+                if (eventsSnap.size > 0) {
+                    window._firestoreEvents = eventsSnap.docs.map(doc => {
+                        const d = doc.data();
+                        return {
+                            title: d.title || '',
+                            date: d.dateDisplay || '',
+                            time: d.time || '',
+                            type: d.type || '',
+                            venue: d.venue || '',
+                            description: d.description || '',
+                            bookingLink: d.bookingLink || '#',
+                            coverImage: d.coverImage || ''
+                        };
+                    });
+                }
+            } catch (e) {
+                console.log('Events Firestore fetch skipped, using static data:', e.message);
+            }
+
+            try {
+                const gallerySnap = await getDocs(query(
+                    collection(db, 'gallery'),
+                    where('active', '==', true),
+                    orderBy('sortOrder', 'asc')
+                ));
+                if (gallerySnap.size > 0) {
+                    window._firestoreGallery = gallerySnap.docs.map(doc => {
+                        const d = doc.data();
+                        return {
+                            title: d.title || '',
+                            date: d.date || '',
+                            coverImage: d.coverImage || '',
+                            coverLabel: d.coverLabel || d.title || '',
+                            photos: (d.photos || []).map(p => ({
+                                src: p.url || p.src || '',
+                                label: p.label || '',
+                                type: p.type || 'image',
+                                poster: p.poster || ''
+                            }))
+                        };
+                    });
+                }
+            } catch (e) {
+                console.log('Gallery Firestore fetch skipped, using static data:', e.message);
+            }
+
+            // Re-render with Firestore data
+            if (typeof window.renderEvents === 'function') {
+                window.renderEvents();
+                if (typeof window.bindEventCardToggles === 'function') window.bindEventCardToggles();
+            }
+            if (typeof window.renderGalleryFromData === 'function') {
+                window.renderGalleryFromData();
+            }
+            return true;
+        })();
+    </script>
     <script>
         // ==================== EVENTS RENDERING ====================
         function parseDate(dateStr) {
@@ -4011,10 +4092,11 @@
             return new Date(year, monthIndex, endDay, hours, minutes, 0, 0);
         }
 
-        function renderEvents() {
+        window.renderEvents = function renderEvents() {
             const eventsList = document.getElementById('eventsList');
             const eventsEmpty = document.getElementById('eventsEmpty');
-            const events = window.eventsData || [];
+            // Prefer Firestore data, fall back to static events.js
+            const events = window._firestoreEvents || window.eventsData || [];
             const now = new Date();
             const upcomingEvents = events.filter(event => {
                 const eventEnd = getEventEndDateTime(event);
@@ -4062,7 +4144,7 @@
             return window.matchMedia('(max-width: 768px)').matches;
         }
 
-        function bindEventCardToggles() {
+        window.bindEventCardToggles = function bindEventCardToggles() {
             const cards = document.querySelectorAll('.event-card');
             cards.forEach(card => {
                 card.addEventListener('click', (event) => {
@@ -4110,7 +4192,8 @@
         }
 
         // ==================== GALLERY CAROUSEL ====================
-        const eventGalleries = window.pastEventsData || [];
+        // Prefer Firestore gallery data, fall back to static pastEventsData
+        let eventGalleries = window._firestoreGallery || window.pastEventsData || [];
         const galleryTrack = document.getElementById('galleryTrack');
         const galleryDots = document.getElementById('galleryDots');
         const prevBtn = document.getElementById('galleryPrev');
@@ -4160,6 +4243,12 @@
             prevBtn.disabled = currentIndex === 0;
             nextBtn.disabled = currentIndex >= getMaxIndex();
         }
+
+        window.renderGalleryFromData = function() {
+            // Refresh data source (Firestore may have loaded after initial render)
+            eventGalleries = window._firestoreGallery || window.pastEventsData || [];
+            renderGallery();
+        };
 
         function renderGallery() {
             if (!galleryTrack) return;
