@@ -3974,7 +3974,7 @@
     <!-- Firebase SDK for public page (read-only Firestore for events + gallery) -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
-        import { getFirestore, collection, getDocs, query, where, orderBy } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+        import { getFirestore, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyAMk6ytOsRIp4ICQRMZrdhQe90-gMEuDDM",
@@ -3990,10 +3990,10 @@
         // Fetch Firestore data and re-render when ready
         window._firestoreReady = (async () => {
             try {
+                // Simple query — no composite index needed
                 const eventsSnap = await getDocs(query(
                     collection(db, 'events'),
-                    where('active', '==', true),
-                    orderBy('date', 'asc')
+                    where('active', '==', true)
                 ));
                 if (eventsSnap.size > 0) {
                     window._firestoreEvents = eventsSnap.docs.map(doc => {
@@ -4001,6 +4001,7 @@
                         return {
                             title: d.title || '',
                             date: d.dateDisplay || '',
+                            _sortDate: d.date || '',
                             time: d.time || '',
                             type: d.type || '',
                             venue: d.venue || '',
@@ -4009,16 +4010,18 @@
                             coverImage: d.coverImage || ''
                         };
                     });
+                    // Sort by date client-side
+                    window._firestoreEvents.sort((a, b) => (a._sortDate || '').localeCompare(b._sortDate || ''));
                 }
             } catch (e) {
                 console.log('Events Firestore fetch skipped, using static data:', e.message);
             }
 
             try {
+                // Simple query — no composite index needed
                 const gallerySnap = await getDocs(query(
                     collection(db, 'gallery'),
-                    where('active', '==', true),
-                    orderBy('sortOrder', 'asc')
+                    where('active', '==', true)
                 ));
                 if (gallerySnap.size > 0) {
                     window._firestoreGallery = gallerySnap.docs.map(doc => {
@@ -4028,6 +4031,7 @@
                             date: d.date || '',
                             coverImage: d.coverImage || '',
                             coverLabel: d.coverLabel || d.title || '',
+                            _sortOrder: d.sortOrder || 0,
                             photos: (d.photos || []).map(p => ({
                                 src: p.url || p.src || '',
                                 label: p.label || '',
@@ -4036,6 +4040,8 @@
                             }))
                         };
                     });
+                    // Sort by sortOrder client-side
+                    window._firestoreGallery.sort((a, b) => (a._sortOrder || 0) - (b._sortOrder || 0));
                 }
             } catch (e) {
                 console.log('Gallery Firestore fetch skipped, using static data:', e.message);
