@@ -1,14 +1,45 @@
 // ============================================
 // ETHEREAL BALANCE - SHOP MODULE
 // ============================================
-import { db, collection, getDocs } from './firebase-config.js';
+import { db, collection, getDocs, doc, getDoc } from './firebase-config.js';
 
 const SHOP_FALLBACK_IMAGE = 'assets/EB.PNG';
 
 let allProducts = [];
-let currentFilter = 'all';
 let currentModalProduct = null;
 let currentImageIndex = 0;
+
+
+async function isStoreEnabled() {
+    try {
+        const settingsSnap = await getDoc(doc(db, 'settings', 'store'));
+        if (!settingsSnap.exists()) return true;
+        const data = settingsSnap.data() || {};
+        return data.storeEnabled !== false;
+    } catch (error) {
+        console.error('Error loading store settings:', error);
+        return true;
+    }
+}
+
+function renderStoreOfflineState(message = 'Our shop is currently offline while we prepare new products. Please check back soon.') {
+    const grid = document.getElementById('shopGrid');
+    const loading = document.getElementById('shopLoading');
+    if (loading) loading.classList.add('hidden');
+    if (!grid) return;
+
+    grid.innerHTML = `
+        <div class="shop-empty" style="grid-column: 1 / -1;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 01-8 0"/>
+            </svg>
+            <h3>Shop Temporarily Offline</h3>
+            <p>${escapeHtml(message)}</p>
+        </div>
+    `;
+}
 
 // ============================================
 // PRODUCT LOADING
@@ -16,6 +47,12 @@ let currentImageIndex = 0;
 async function loadProducts() {
     const grid = document.getElementById('shopGrid');
     const loading = document.getElementById('shopLoading');
+
+    const storeEnabled = await isStoreEnabled();
+    if (!storeEnabled) {
+        renderStoreOfflineState();
+        return;
+    }
 
     try {
         const snapshot = await getDocs(collection(db, 'products'));
@@ -71,9 +108,7 @@ function renderProducts(products) {
     const grid = document.getElementById('shopGrid');
     if (!grid) return;
 
-    const filtered = currentFilter === 'all'
-        ? products
-        : products.filter(p => p.category === currentFilter);
+    const filtered = products;
 
     if (filtered.length === 0) {
         grid.innerHTML = `
@@ -84,7 +119,7 @@ function renderProducts(products) {
                     <path d="M16 10a4 4 0 01-8 0"/>
                 </svg>
                 <h3>No Products Found</h3>
-                <p>There are no products in this category yet.</p>
+                <p>There are no products available yet.</p>
             </div>
         `;
         return;
@@ -131,20 +166,6 @@ function renderProducts(products) {
         });
     });
 }
-
-// ============================================
-// FILTERING
-// ============================================
-window.filterProducts = function(filter) {
-    currentFilter = filter;
-
-    // Update active filter button
-    document.querySelectorAll('.shop-filter-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.filter === filter);
-    });
-
-    renderProducts(allProducts);
-};
 
 // ============================================
 // PRODUCT DETAIL MODAL
