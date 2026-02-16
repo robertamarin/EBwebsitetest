@@ -26,6 +26,7 @@ const corsHandler = cors({
     "https://www.ethereal-balance.com",
     "https://ethereal-balance.web.app",
     "https://ethereal-balance.firebaseapp.com",
+    "https://robertamarin.github.io",
     "http://localhost:5500", // for local development
     "http://127.0.0.1:5500",
   ],
