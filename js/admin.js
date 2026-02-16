@@ -1267,7 +1267,7 @@ const LEGACY_SITE_PARTNERS = [
 let hasBackfilledLegacyPartners = false;
 
 async function ensureLegacyPartnersBackfilled(existingPartners) {
-    if (hasBackfilledLegacyPartners) return;
+    if (hasBackfilledLegacyPartners) return false;
 
     const existingKeys = new Set(
         (existingPartners || []).map((p) => `${String(p.name || '').trim().toLowerCase()}|${String(p.url || '').trim().toLowerCase()}`)
@@ -1280,20 +1280,28 @@ async function ensureLegacyPartnersBackfilled(existingPartners) {
 
     if (missingPartners.length === 0) {
         hasBackfilledLegacyPartners = true;
-        return;
+        return false;
     }
 
-    await Promise.all(missingPartners.map((partner) =>
-        addDoc(collection(db, 'partners'), {
-            name: partner.name,
-            url: partner.url,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-            source: 'legacy-site'
-        })
-    ));
+    let addedCount = 0;
+
+    for (const partner of missingPartners) {
+        try {
+            await addDoc(collection(db, 'partners'), {
+                name: partner.name,
+                url: partner.url,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                source: 'legacy-site'
+            });
+            addedCount += 1;
+        } catch (error) {
+            console.warn(`Skipping legacy partner backfill for "${partner.name}"`, error);
+        }
+    }
 
     hasBackfilledLegacyPartners = true;
+    return addedCount > 0;
 }
 
 async function loadPartners() {
@@ -1315,6 +1323,21 @@ async function loadPartners() {
         await ensureLegacyPartnersBackfilled(allPartners);
 
         if (!hasBackfilledLegacyPartners || allPartners.length === 0) {
+            const refreshed = await getDocs(collection(db, 'partners'));
+            allPartners = refreshed.docs.map(d => ({ id: d.id, ...d.data() }));
+        }
+
+        allPartners.sort((a, b) => {
+            const aTime = a.createdAt?.toMillis?.() || 0;
+            const bTime = b.createdAt?.toMillis?.() || 0;
+            return bTime - aTime;
+        });
+
+        // Render partners even if backfill writes are blocked by Firestore rules.
+        // This prevents the UI from getting stuck in "Error loading partners".
+        const addedLegacyPartners = await ensureLegacyPartnersBackfilled(allPartners);
+
+        if (addedLegacyPartners || allPartners.length === 0) {
             const refreshed = await getDocs(collection(db, 'partners'));
             allPartners = refreshed.docs.map(d => ({ id: d.id, ...d.data() }));
         }
