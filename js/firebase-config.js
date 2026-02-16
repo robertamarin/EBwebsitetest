@@ -25,7 +25,7 @@ const storage = getStorage(app);
 
 // Stripe Configuration
 // Replace with your Stripe publishable key (safe for client-side)
-const STRIPE_PUBLISHABLE_KEY = 'pk_live_YOUR_PUBLISHABLE_KEY';
+const STRIPE_PUBLISHABLE_KEY = 'pk_live_51T1V2uKBwU3yvbF87vG91VqRYw17jqpJq0f5pp54pYw8NBbfwEv5e8h2untVwYNeFeZGsuSanByjC7MjCdZsf37A00A4oHBjRE';
 
 // Cloud Functions base URL
 // Replace with your actual Firebase Cloud Functions URL after deployment

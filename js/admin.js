@@ -1230,200 +1230,218 @@ window.saveOrderNotes = async function(orderId) {
     }
 };
 
+// PARTNERS MANAGEMENT
 // ============================================
-// PARTNERS
-// ============================================
-const LEGACY_SITE_PARTNERS = [
-    { name: 'Roam Homeware', url: 'https://roamhomeware.com/' },
-    { name: 'Orli Hotel (Orli La Jolla)', url: 'https://stayorli.com/' },
-    { name: 'Lucia at Aviara', url: 'https://luciaaviara.com/' },
-    { name: 'SAGO', url: 'https://www.sagoencinitas.com/' },
-    { name: 'LSKD', url: 'https://lskd.com' },
-    { name: 'Wonderland', url: 'https://www.wonderlandob.com/' },
-    { name: 'Studio Casually', url: 'https://www.studiocasually.com/contact' },
-    { name: 'HERO Fitness', url: 'https://heroboardfitness.com' },
-    { name: 'Moniker Coffee Co.', url: 'https://www.monikercoffee.com/' },
-    { name: 'Ocean Pacific Gym & Wellness', url: 'https://www.oceanpacificgym.com/' },
-    { name: 'Trident Coffee', url: 'https://tridentcoffee.com/' },
-    { name: 'LMNT', url: 'https://drinklmnt.com/' },
-    { name: 'Yesly', url: 'https://yeslywater.com/' },
-    { name: 'PNKYS', url: 'https://drinkpnkys.com/' },
-    { name: 'Brogi Mats', url: 'https://brogiyoga.com/' },
-    { name: 'VYB Swim', url: 'https://www.vybswim.com' },
-    { name: 'Brick & Bell', url: 'https://www.instagram.com/brickandbell/?hl=en' },
-    { name: 'Olive Club', url: 'https://oliveclubhouse.com/' },
-    { name: 'Zaytouna Olive Oil', url: 'https://zaytounaoliveoil.com/' },
-    { name: 'Like Air', url: 'https://likeair.com/' },
-    { name: 'Blenders', url: 'https://blenderseyewear.com' },
-    { name: 'SunBum', url: 'https://www.sunbum.com/' },
-    { name: 'ATARAHbody', url: 'https://atarahbody.com/' },
-    { name: 'BUYA', url: 'https://www.instagram.com/buya.designs/?hl=en' },
-    { name: 'Organic Jaguar', url: 'https://organicjaguar.com' },
-    { name: 'Herbs to Acupuncture', url: 'https://www.herbstoacupuncture.com/' },
-    { name: 'SLATE', url: 'https://slatemilk.com' },
-    { name: 'WildSociety', url: 'https://wildsociety.com' }
-];
-
-let hasBackfilledLegacyPartners = false;
-
-async function ensureLegacyPartnersBackfilled(existingPartners) {
-    if (hasBackfilledLegacyPartners) return false;
-
-    const existingKeys = new Set(
-        (existingPartners || []).map((p) => `${String(p.name || '').trim().toLowerCase()}|${String(p.url || '').trim().toLowerCase()}`)
-    );
-
-    const missingPartners = LEGACY_SITE_PARTNERS.filter((p) => {
-        const key = `${p.name.trim().toLowerCase()}|${p.url.trim().toLowerCase()}`;
-        return !existingKeys.has(key);
-    });
-
-    if (missingPartners.length === 0) {
-        hasBackfilledLegacyPartners = true;
-        return false;
-    }
-
-    let addedCount = 0;
-
-    for (const partner of missingPartners) {
-        try {
-            await addDoc(collection(db, 'partners'), {
-                name: partner.name,
-                url: partner.url,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-                source: 'legacy-site'
-            });
-            addedCount += 1;
-        } catch (error) {
-            console.warn(`Skipping legacy partner backfill for "${partner.name}"`, error);
-        }
-    }
-
-    hasBackfilledLegacyPartners = true;
-    return addedCount > 0;
-}
+let allAdminPartners = [];
 
 async function loadPartners() {
-    const table = document.getElementById('adminPartnersTable');
-    if (!table) return;
-
-    table.innerHTML = '<p style="padding: 24px; text-align: center; color: var(--stone);">Loading partners...</p>';
-
     try {
-        let snap;
+        let snapshot;
         try {
-            snap = await getDocs(query(collection(db, 'partners'), orderBy('createdAt', 'desc')));
+            snapshot = await getDocs(query(collection(db, 'partners'), orderBy('order', 'asc')));
         } catch (queryError) {
             console.warn('Falling back to non-ordered partner query:', queryError);
-            snap = await getDocs(collection(db, 'partners'));
+            snapshot = await getDocs(collection(db, 'partners'));
         }
 
-        allPartners = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        await ensureLegacyPartnersBackfilled(allPartners);
-
-        if (!hasBackfilledLegacyPartners || allPartners.length === 0) {
-            const refreshed = await getDocs(collection(db, 'partners'));
-            allPartners = refreshed.docs.map(d => ({ id: d.id, ...d.data() }));
-        }
-
-        allPartners.sort((a, b) => {
-            const aTime = a.createdAt?.toMillis?.() || 0;
-            const bTime = b.createdAt?.toMillis?.() || 0;
-            return bTime - aTime;
+        allAdminPartners = [];
+        snapshot.forEach(d => {
+            allAdminPartners.push({ id: d.id, ...d.data() });
         });
 
-        // Render partners even if backfill writes are blocked by Firestore rules.
-        // This prevents the UI from getting stuck in "Error loading partners".
-        const addedLegacyPartners = await ensureLegacyPartnersBackfilled(allPartners);
+        const container = document.getElementById('adminPartnersTable');
 
-        if (addedLegacyPartners || allPartners.length === 0) {
-            const refreshed = await getDocs(collection(db, 'partners'));
-            allPartners = refreshed.docs.map(d => ({ id: d.id, ...d.data() }));
-        }
-
-        allPartners.sort((a, b) => {
-            const aTime = a.createdAt?.toMillis?.() || 0;
-            const bTime = b.createdAt?.toMillis?.() || 0;
-            return bTime - aTime;
-        });
-
-        if (!allPartners.length) {
-            table.innerHTML = '<p style="padding: 24px; text-align: center; color: var(--stone);">No custom partners added yet.</p>';
+        if (allAdminPartners.length === 0) {
+            container.innerHTML = '<p style="padding: 40px; text-align: center; color: var(--stone);">No partners yet. Click "Seed Existing Partners" to import your current partners, or "Add Partner" to add a new one.</p>';
             return;
         }
 
-        table.innerHTML = `
+        container.innerHTML = `
             <table class="admin-table">
                 <thead>
                     <tr>
+                        <th>Order</th>
                         <th>Name</th>
                         <th>Website</th>
-                        <th style="text-align:right;">Action</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${allPartners.map(p => `
-                        <tr>
-                            <td>${escapeHtml(p.name || '')}</td>
-                            <td><a href="${escapeAttr(p.url || '#')}" target="_blank" rel="noopener">${escapeHtml(p.url || '')}</a></td>
-                            <td style="text-align:right;">
-                                <button class="btn-admin-secondary" type="button" onclick="deletePartner('${p.id}')">Delete</button>
-                            </td>
-                        </tr>
-                    `).join('')}
+                    ${allAdminPartners.map(p => {
+                        const categoryLabels = { hospitality: 'Hospitality', corporate: 'Corporate', community: 'Community' };
+                        return `
+                            <tr>
+                                <td>${p.order ?? 0}</td>
+                                <td><strong>${escapeHtml(p.name)}</strong></td>
+                                <td>${p.url ? `<a href="${escapeAttr(p.url)}" target="_blank" rel="noopener" style="color: var(--sage-dark); text-decoration: none;">${escapeHtml(p.url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''))}</a>` : '<span style="color: var(--stone);">\u2014</span>'}</td>
+                                <td>${escapeHtml(categoryLabels[p.category] || p.category || '\u2014')}</td>
+                                <td><span class="status-badge ${p.isActive !== false ? 'active' : 'inactive'}">${p.isActive !== false ? 'Active' : 'Inactive'}</span></td>
+                                <td>
+                                    <div class="admin-actions">
+                                        <button class="admin-action-btn" onclick="editPartner('${p.id}')" title="Edit">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                        </button>
+                                        <button class="admin-action-btn delete" onclick="deletePartner('${p.id}', '${escapeAttr(p.name)}')" title="Delete">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('')}
                 </tbody>
             </table>
         `;
     } catch (error) {
         console.error('Error loading partners:', error);
-        table.innerHTML = '<p style="padding: 24px; text-align: center; color: var(--red);">Error loading partners.</p>';
+        document.getElementById('adminPartnersTable').innerHTML = '<p style="padding: 40px; text-align: center; color: var(--red);">Error loading partners. Check console for details.</p>';
     }
 }
+
+window.openPartnerEditor = function(partnerId) {
+    const modal = document.getElementById('partnerEditorModal');
+    const title = document.getElementById('partnerEditorTitle');
+    const form = document.getElementById('partnerEditorForm');
+
+    form.reset();
+    document.getElementById('partnerEditId').value = '';
+    document.getElementById('partnerOrder').value = allAdminPartners.length;
+    document.getElementById('partnerActive').checked = true;
+
+    if (partnerId) {
+        title.textContent = 'Edit Partner';
+        const partner = allAdminPartners.find(p => p.id === partnerId);
+        if (partner) {
+            document.getElementById('partnerEditId').value = partner.id;
+            document.getElementById('partnerName').value = partner.name || '';
+            document.getElementById('partnerUrl').value = partner.url || '';
+            document.getElementById('partnerCategory').value = partner.category || 'community';
+            document.getElementById('partnerLogo').value = partner.logoUrl || '';
+            document.getElementById('partnerOrder').value = partner.order ?? 0;
+            document.getElementById('partnerActive').checked = partner.isActive !== false;
+        }
+    } else {
+        title.textContent = 'Add Partner';
+    }
+
+    modal.style.display = 'flex';
+};
+
+window.closePartnerEditor = function() {
+    document.getElementById('partnerEditorModal').style.display = 'none';
+};
+
+window.editPartner = function(partnerId) {
+    window.openPartnerEditor(partnerId);
+};
 
 window.savePartner = async function(e) {
     e.preventDefault();
 
-    const nameEl = document.getElementById('partnerName');
-    const urlEl = document.getElementById('partnerUrl');
-    if (!nameEl || !urlEl) return;
+    const editId = document.getElementById('partnerEditId').value;
 
-    const name = nameEl.value.trim();
-    const url = urlEl.value.trim();
+    const partnerData = {
+        name: document.getElementById('partnerName').value.trim(),
+        url: document.getElementById('partnerUrl').value.trim() || null,
+        category: document.getElementById('partnerCategory').value,
+        logoUrl: document.getElementById('partnerLogo').value.trim() || null,
+        order: parseInt(document.getElementById('partnerOrder').value) || 0,
+        isActive: document.getElementById('partnerActive').checked,
+        updatedAt: serverTimestamp()
+    };
 
-    if (!name || !url) {
-        showToast('Please enter partner name and URL', 'error');
+    try {
+        if (editId) {
+            await updateDoc(doc(db, 'partners', editId), partnerData);
+            showToast('Partner updated successfully', 'success');
+        } else {
+            partnerData.createdAt = serverTimestamp();
+            await addDoc(collection(db, 'partners'), partnerData);
+            showToast('Partner created successfully', 'success');
+        }
+
+        closePartnerEditor();
+        loadPartners();
+    } catch (error) {
+        console.error('Error saving partner:', error);
+        showToast('Error saving partner', 'error');
+    }
+};
+
+window.deletePartner = async function(partnerId, partnerName) {
+    if (!confirm(`Are you sure you want to delete "${partnerName}"? This cannot be undone.`)) {
         return;
     }
 
     try {
-        await addDoc(collection(db, 'partners'), {
-            name,
-            url,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-        });
-
-        nameEl.value = '';
-        urlEl.value = '';
-        showToast('Partner added', 'success');
-        loadPartners();
-    } catch (error) {
-        console.error('Error adding partner:', error);
-        showToast('Error adding partner', 'error');
-    }
-};
-
-window.deletePartner = async function(partnerId) {
-    if (!partnerId) return;
-
-    try {
         await deleteDoc(doc(db, 'partners', partnerId));
-        showToast('Partner removed', 'success');
+        showToast('Partner deleted', 'success');
         loadPartners();
     } catch (error) {
         console.error('Error deleting partner:', error);
         showToast('Error deleting partner', 'error');
+    }
+};
+
+// Seed existing hardcoded partners into Firestore
+window.seedPartners = async function() {
+    const existing = await getDocs(collection(db, 'partners'));
+    if (existing.size > 0) {
+        if (!confirm(`There are already ${existing.size} partners in the database. Do you want to add the default partners anyway? (This may create duplicates.)`)) {
+            return;
+        }
+    }
+
+    const defaultPartners = [
+        { name: 'Roam Homeware', url: 'https://roamhomeware.com/', category: 'community' },
+        { name: 'Orli Hotel (Orli La Jolla)', url: 'https://stayorli.com/', category: 'hospitality' },
+        { name: 'Lucia at Aviara', url: 'https://luciaaviara.com/', category: 'hospitality' },
+        { name: 'SAGO', url: 'https://www.sagoencinitas.com/', category: 'hospitality' },
+        { name: 'LSKD', url: 'https://lskd.com', category: 'corporate' },
+        { name: 'Wonderland', url: 'https://www.wonderlandob.com/', category: 'hospitality' },
+        { name: 'Studio Casually', url: 'https://www.studiocasually.com/contact', category: 'community' },
+        { name: 'HERO Fitness', url: 'https://heroboardfitness.com', category: 'community' },
+        { name: 'Moniker Coffee Co.', url: 'https://www.monikercoffee.com/', category: 'community' },
+        { name: 'Ocean Pacific Gym & Wellness', url: 'https://www.oceanpacificgym.com/', category: 'community' },
+        { name: 'Trident Coffee', url: 'https://tridentcoffee.com/', category: 'community' },
+        { name: 'LMNT', url: 'https://drinklmnt.com/', category: 'corporate' },
+        { name: 'Yesly', url: 'https://yeslywater.com/', category: 'corporate' },
+        { name: 'PNKYS', url: 'https://drinkpnkys.com/', category: 'community' },
+        { name: 'Brogi Mats', url: 'https://brogiyoga.com/', category: 'community' },
+        { name: 'VYB Swim', url: 'https://www.vybswim.com', category: 'community' },
+        { name: 'Brick & Bell', url: 'https://www.instagram.com/brickandbell/?hl=en', category: 'community' },
+        { name: 'Olive Club', url: 'https://oliveclubhouse.com/', category: 'community' },
+        { name: 'Zaytouna Olive Oil', url: 'https://zaytounaoliveoil.com/', category: 'community' },
+        { name: 'Like Air', url: 'https://likeair.com/', category: 'community' },
+        { name: 'Blenders', url: 'https://blenderseyewear.com', category: 'corporate' },
+        { name: 'SunBum', url: 'https://www.sunbum.com/', category: 'corporate' },
+        { name: 'ATARAHbody', url: 'https://atarahbody.com/', category: 'community' },
+        { name: 'BUYA', url: 'https://www.instagram.com/buya.designs/?hl=en', category: 'community' },
+        { name: 'Organic Jaguar', url: 'https://organicjaguar.com', category: 'community' },
+        { name: 'Herbs to Acupuncture', url: 'https://www.herbstoacupuncture.com/', category: 'community' },
+        { name: 'SLATE', url: 'https://slatemilk.com', category: 'corporate' },
+        { name: 'WildSociety', url: 'https://wildsociety.com', category: 'community' }
+    ];
+
+    try {
+        showToast('Seeding partners...', 'success');
+        for (let i = 0; i < defaultPartners.length; i++) {
+            await addDoc(collection(db, 'partners'), {
+                ...defaultPartners[i],
+                order: i,
+                isActive: true,
+                logoUrl: null,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+        }
+        showToast(`${defaultPartners.length} partners added successfully!`, 'success');
+        loadPartners();
+    } catch (error) {
+        console.error('Error seeding partners:', error);
+        showToast('Error seeding partners. Check console for details.', 'error');
     }
 };
 

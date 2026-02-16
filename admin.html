@@ -134,26 +134,15 @@
 
             <!-- PARTNERS SECTION -->
             <div class="admin-section" id="sectionPartners" style="display:none;">
-                <h2>Partners</h2>
-                <div class="admin-settings-form" style="max-width: 760px;">
-                    <form id="partnersForm" onsubmit="savePartner(event)">
-                        <div class="admin-form-row">
-                            <div class="admin-form-group">
-                                <label>Partner Name</label>
-                                <input type="text" id="partnerName" required placeholder="Example Partner">
-                            </div>
-                            <div class="admin-form-group">
-                                <label>Partner Website URL</label>
-                                <input type="url" id="partnerUrl" required placeholder="https://example.com">
-                            </div>
-                        </div>
-                        <div class="admin-form-actions">
-                            <button type="submit" class="btn-admin-primary">Add Partner</button>
-                        </div>
-                    </form>
-                    <div class="admin-table-container" id="adminPartnersTable" style="margin-top: 24px;">
-                        <p style="padding: 24px; text-align: center; color: var(--stone);">Loading partners...</p>
+                <div class="admin-section-header">
+                    <h2>Partners</h2>
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn-admin-secondary" onclick="seedPartners()">Seed Existing Partners</button>
+                        <button class="btn-admin-primary" onclick="openPartnerEditor()">+ Add Partner</button>
                     </div>
+                </div>
+                <div class="admin-table-container" id="adminPartnersTable">
+                    <p style="padding: 40px; text-align: center; color: var(--stone);">Loading...</p>
                 </div>
             </div>
 
@@ -444,6 +433,59 @@
                 <div class="admin-form-actions">
                     <button type="button" class="btn-admin-secondary" onclick="closeGalleryEditor()">Cancel</button>
                     <button type="submit" class="btn-admin-primary">Save Gallery</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Partner Editor Modal -->
+    <div class="admin-modal-overlay" id="partnerEditorModal" style="display:none;">
+        <div class="admin-modal">
+            <button class="admin-modal-close" onclick="closePartnerEditor()">&times;</button>
+            <h2 id="partnerEditorTitle">Add Partner</h2>
+            <form id="partnerEditorForm" onsubmit="savePartner(event)">
+                <input type="hidden" id="partnerEditId" value="">
+
+                <div class="admin-form-group">
+                    <label>Partner Name</label>
+                    <input type="text" id="partnerName" required placeholder="e.g., Roam Homeware">
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Website URL</label>
+                    <input type="url" id="partnerUrl" placeholder="https://example.com">
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Category</label>
+                    <select id="partnerCategory">
+                        <option value="community">Community</option>
+                        <option value="hospitality">Hospitality</option>
+                        <option value="corporate">Corporate</option>
+                    </select>
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Logo URL (optional)</label>
+                    <input type="text" id="partnerLogo" placeholder="https://... (leave blank for text display)">
+                </div>
+
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label>Display Order</label>
+                        <input type="number" id="partnerOrder" min="0" value="0" placeholder="0">
+                    </div>
+                    <div class="admin-form-group" style="display:flex; align-items:flex-end; padding-bottom: 20px;">
+                        <div class="admin-form-check" style="margin-bottom:0;">
+                            <input type="checkbox" id="partnerActive" checked>
+                            <label for="partnerActive">Active (visible on site)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-form-actions">
+                    <button type="button" class="btn-admin-secondary" onclick="closePartnerEditor()">Cancel</button>
+                    <button type="submit" class="btn-admin-primary">Save Partner</button>
                 </div>
             </form>
         </div>
