@@ -7,7 +7,7 @@ import {
     query, where, orderBy, limit, onSnapshot,
     serverTimestamp, firestoreIncrement,
     signInWithEmailAndPassword, onAuthStateChanged, signOut,
-    storageRef, uploadBytes, getDownloadURL, deleteObject, listAll
+    storageRef, uploadBytes, getDownloadURL, deleteObject, listAll, getMetadata
 } from './firebase-config.js';
 
 // ============================================
