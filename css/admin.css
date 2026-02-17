@@ -145,21 +145,42 @@ h1, h2, h3, h4 {
 .admin-sidebar-logo {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
     padding: 0 24px;
     margin-bottom: 40px;
 }
 
 .admin-sidebar-logo img {
-    width: 36px;
-    height: 36px;
+    width: 42px;
+    height: 42px;
     filter: brightness(0) invert(1);
+    flex-shrink: 0;
 }
 
-.admin-sidebar-logo span {
+.admin-sidebar-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.admin-sidebar-brand .brand-name {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1.3rem;
+    font-size: 1.25rem;
     font-weight: 500;
+    color: white;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.admin-sidebar-brand .brand-label {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4);
+    line-height: 1;
 }
 
 .admin-nav {
@@ -223,6 +244,23 @@ h1, h2, h3, h4 {
     color: white;
 }
 
+/* Sidebar backdrop for mobile */
+.admin-sidebar-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(45, 45, 45, 0.4);
+    backdrop-filter: blur(3px);
+    z-index: 99;
+}
+
+.admin-sidebar-backdrop.active {
+    display: block;
+}
+
 /* Main Content */
 .admin-main {
     flex: 1;
@@ -231,12 +269,48 @@ h1, h2, h3, h4 {
     min-height: 100vh;
 }
 
+/* Top Bar - visible only on mobile when sidebar is hidden */
+.admin-topbar {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    padding: 0 16px 0 68px;
+    background: var(--warm-white);
+    border-bottom: 1px solid var(--sand);
+    z-index: 50;
+}
+
+.admin-topbar-logo {
+    width: 28px;
+    height: 28px;
+}
+
+.admin-topbar span {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.15rem;
+    font-weight: 500;
+    color: var(--charcoal);
+}
+
+@media (max-width: 768px) {
+    .admin-topbar {
+        display: flex;
+    }
+}
+
 /* Section Headers */
 .admin-section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 16px;
 }
 
 .admin-section h2 {
@@ -247,6 +321,12 @@ h1, h2, h3, h4 {
 
 .admin-section-header h2 {
     margin-bottom: 0;
+}
+
+.admin-section-header > div {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 /* Stats Grid */
@@ -427,39 +507,50 @@ h1, h2, h3, h4 {
 /* Primary Button */
 .btn-admin-primary {
     font-family: 'Outfit', sans-serif;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 500;
-    padding: 12px 24px;
+    padding: 11px 22px;
     border: none;
-    border-radius: 12px;
+    border-radius: 10px;
     background: var(--charcoal);
     color: var(--warm-white);
     cursor: pointer;
     transition: all 0.3s ease;
     letter-spacing: 0.03em;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .btn-admin-primary:hover {
     background: var(--sage-dark);
     transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 /* Secondary Button */
 .btn-admin-secondary {
     font-family: 'Outfit', sans-serif;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 400;
-    padding: 12px 24px;
+    padding: 11px 22px;
     border: 1.5px solid var(--sand);
-    border-radius: 12px;
-    background: transparent;
+    border-radius: 10px;
+    background: var(--warm-white);
     color: var(--charcoal);
     cursor: pointer;
     transition: all 0.3s ease;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .btn-admin-secondary:hover {
-    border-color: var(--charcoal);
+    border-color: var(--sage);
+    color: var(--sage-dark);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 /* ============================================
@@ -1183,7 +1274,8 @@ h1, h2, h3, h4 {
         position: fixed;
         transform: translateX(-100%);
         transition: transform 0.3s ease;
-        width: 260px;
+        width: 280px;
+        box-shadow: 4px 0 30px rgba(0, 0, 0, 0.2);
     }
 
     .admin-sidebar.open {
@@ -1192,11 +1284,29 @@ h1, h2, h3, h4 {
 
     .admin-main {
         margin-left: 0;
-        padding: 20px;
+        padding: 72px 16px 20px;
+    }
+
+    .admin-section h2 {
+        font-size: 1.6rem;
+        margin-bottom: 20px;
+    }
+
+    .admin-section-header {
+        margin-bottom: 20px;
     }
 
     .admin-stats-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .admin-stat-card {
+        padding: 20px;
+    }
+
+    .admin-stat-value {
+        font-size: 1.8rem;
     }
 
     .admin-form-row {
@@ -1211,20 +1321,60 @@ h1, h2, h3, h4 {
         min-width: 600px;
     }
 
+    .admin-modal {
+        margin-top: 20px;
+        padding: 28px 20px;
+        border-radius: 16px;
+    }
+
+    .admin-modal-overlay {
+        padding: 16px 12px;
+    }
+
+    .admin-event-cards,
+    .admin-gallery-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .btn-admin-primary,
+    .btn-admin-secondary {
+        padding: 10px 16px;
+        font-size: 0.8rem;
+    }
+
     .admin-mobile-toggle {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         position: fixed;
         top: 16px;
         left: 16px;
         z-index: 101;
-        width: 40px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
         border: none;
         background: var(--charcoal);
         color: white;
-        border-radius: 10px;
+        border-radius: 12px;
         cursor: pointer;
-        font-size: 1.2rem;
+        font-size: 1.3rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transition: all 0.2s ease;
+    }
+
+    .admin-mobile-toggle:hover {
+        background: var(--sage-dark);
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-section-header {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }
 

@@ -1,7 +1,7 @@
 // ============================================
 // ETHEREAL BALANCE - SHOP MODULE
 // ============================================
-import { db, collection, getDocs, doc, getDoc } from './firebase-config.js';
+import { db, collection, getDocs, doc, getDoc, query, where, orderBy } from './firebase-config.js';
 
 const SHOP_FALLBACK_IMAGE = 'assets/EB.PNG';
 
@@ -22,23 +22,32 @@ async function isStoreEnabled() {
     }
 }
 
-function renderStoreOfflineState(message = 'Our shop is currently offline while we prepare new products. Please check back soon.') {
-    const grid = document.getElementById('shopGrid');
-    const loading = document.getElementById('shopLoading');
-    if (loading) loading.classList.add('hidden');
-    if (!grid) return;
+/**
+ * Completely hides the shop from the website — removes section, nav links, and cart.
+ */
+function hideStoreCompletely() {
+    // Hide the shop section
+    const shopSection = document.getElementById('shop');
+    if (shopSection) shopSection.style.display = 'none';
 
-    grid.innerHTML = `
-        <div class="shop-empty" style="grid-column: 1 / -1;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
-                <line x1="3" y1="6" x2="21" y2="6"/>
-                <path d="M16 10a4 4 0 01-8 0"/>
-            </svg>
-            <h3>Shop Temporarily Offline</h3>
-            <p>${escapeHtml(message)}</p>
-        </div>
-    `;
+    // Hide all nav links pointing to #shop
+    document.querySelectorAll('a[href="#shop"]').forEach(link => {
+        const li = link.closest('li');
+        if (li) li.style.display = 'none';
+        else link.style.display = 'none';
+    });
+
+    // Hide the cart button
+    const cartBtn = document.getElementById('navCartBtn');
+    if (cartBtn) cartBtn.style.display = 'none';
+
+    // Hide cart drawer if it exists
+    const cartDrawer = document.getElementById('cartDrawer');
+    if (cartDrawer) cartDrawer.style.display = 'none';
+
+    // Hide checkout success banner
+    const shopLoading = document.getElementById('shopLoading');
+    if (shopLoading) shopLoading.style.display = 'none';
 }
 
 // ============================================
@@ -50,23 +59,22 @@ async function loadProducts() {
 
     const storeEnabled = await isStoreEnabled();
     if (!storeEnabled) {
-        renderStoreOfflineState();
+        hideStoreCompletely();
         return;
     }
 
     try {
-        const snapshot = await getDocs(collection(db, 'products'));
+        // Query only active products — Firestore rules require isActive==true for public reads
+        const snapshot = await getDocs(query(
+            collection(db, 'products'),
+            where('isActive', '==', true)
+        ));
         allProducts = [];
 
         snapshot.forEach(doc => {
-            const data = doc.data();
-            const isActive = data.isActive !== false && data.active !== false;
-
-            if (!isActive) return;
-
             allProducts.push({
                 id: doc.id,
-                ...data,
+                ...doc.data(),
                 isActive: true
             });
         });

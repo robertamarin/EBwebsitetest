@@ -357,10 +357,14 @@ window.switchAdminSection = function(section) {
     }
 
     document.getElementById('adminSidebar')?.classList.remove('open');
+    document.getElementById('adminSidebarBackdrop')?.classList.remove('active');
 };
 
 window.toggleAdminSidebar = function() {
-    document.getElementById('adminSidebar')?.classList.toggle('open');
+    const sidebar = document.getElementById('adminSidebar');
+    const backdrop = document.getElementById('adminSidebarBackdrop');
+    sidebar?.classList.toggle('open');
+    backdrop?.classList.toggle('active');
 };
 
 // ============================================
