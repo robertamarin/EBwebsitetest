@@ -1461,6 +1461,23 @@ async function loadSettings() {
             document.getElementById('settingFreeShipping').value = data.freeShippingThreshold ? (data.freeShippingThreshold / 100).toFixed(2) : '';
             document.getElementById('settingTaxRate').value = data.taxRate || '';
             document.getElementById('settingStoreEnabled').checked = data.storeEnabled !== false;
+            document.getElementById('settingHeroEyebrow').value = data.heroEyebrow || '';
+            document.getElementById('settingHeroHeading').value = data.heroHeading || '';
+            document.getElementById('settingHeroDescription').value = data.heroDescription || '';
+            document.getElementById('settingHeroPrimaryCtaLabel').value = data.heroPrimaryCtaLabel || '';
+            document.getElementById('settingHeroPrimaryCtaHref').value = data.heroPrimaryCtaHref || '';
+            document.getElementById('settingHeroSecondaryCtaLabel').value = data.heroSecondaryCtaLabel || '';
+            document.getElementById('settingHeroSecondaryCtaHref').value = data.heroSecondaryCtaHref || '';
+            document.getElementById('settingAboutHeading').value = data.aboutHeading || '';
+            document.getElementById('settingAboutParagraph1').value = data.aboutParagraph1 || '';
+            document.getElementById('settingAboutParagraph2').value = data.aboutParagraph2 || '';
+            document.getElementById('settingAboutParagraph3').value = data.aboutParagraph3 || '';
+            document.getElementById('settingContactHeading').value = data.contactHeading || '';
+            document.getElementById('settingContactDescription').value = data.contactDescription || '';
+            document.getElementById('settingColorCharcoal').value = data.themeCharcoal || '#2d2d2d';
+            document.getElementById('settingColorTerracotta').value = data.themeTerracotta || '#c4907a';
+            document.getElementById('settingColorSageDark').value = data.themeSageDark || '#7a9167';
+            document.getElementById('settingColorCream').value = data.themeCream || '#f7f4f0';
         }
     } catch (error) {
         console.error('Error loading settings:', error);
@@ -1474,13 +1491,49 @@ window.saveSettings = async function(e) {
     const freeShipping = parseFloat(document.getElementById('settingFreeShipping').value) || 0;
     const taxRate = parseFloat(document.getElementById('settingTaxRate').value) || 0;
     const storeEnabled = document.getElementById('settingStoreEnabled').checked;
+    const heroEyebrow = document.getElementById('settingHeroEyebrow').value.trim();
+    const heroHeading = document.getElementById('settingHeroHeading').value.trim();
+    const heroDescription = document.getElementById('settingHeroDescription').value.trim();
+    const heroPrimaryCtaLabel = document.getElementById('settingHeroPrimaryCtaLabel').value.trim();
+    const heroPrimaryCtaHref = document.getElementById('settingHeroPrimaryCtaHref').value.trim();
+    const heroSecondaryCtaLabel = document.getElementById('settingHeroSecondaryCtaLabel').value.trim();
+    const heroSecondaryCtaHref = document.getElementById('settingHeroSecondaryCtaHref').value.trim();
+    const aboutHeading = document.getElementById('settingAboutHeading').value.trim();
+    const aboutParagraph1 = document.getElementById('settingAboutParagraph1').value.trim();
+    const aboutParagraph2 = document.getElementById('settingAboutParagraph2').value.trim();
+    const aboutParagraph3 = document.getElementById('settingAboutParagraph3').value.trim();
+    const contactHeading = document.getElementById('settingContactHeading').value.trim();
+    const contactDescription = document.getElementById('settingContactDescription').value.trim();
+    const themeCharcoal = document.getElementById('settingColorCharcoal').value;
+    const themeTerracotta = document.getElementById('settingColorTerracotta').value;
+    const themeSageDark = document.getElementById('settingColorSageDark').value;
+    const themeCream = document.getElementById('settingColorCream').value;
 
     try {
         const settingsRef = doc(db, 'settings', 'store');
         const data = {
             shippingRate: Math.round(shippingRate * 100),
             freeShippingThreshold: Math.round(freeShipping * 100),
-            taxRate, storeEnabled, updatedAt: serverTimestamp()
+            taxRate,
+            storeEnabled,
+            heroEyebrow,
+            heroHeading,
+            heroDescription,
+            heroPrimaryCtaLabel,
+            heroPrimaryCtaHref,
+            heroSecondaryCtaLabel,
+            heroSecondaryCtaHref,
+            aboutHeading,
+            aboutParagraph1,
+            aboutParagraph2,
+            aboutParagraph3,
+            contactHeading,
+            contactDescription,
+            themeCharcoal,
+            themeTerracotta,
+            themeSageDark,
+            themeCream,
+            updatedAt: serverTimestamp()
         };
 
         await setDoc(settingsRef, data, { merge: true });

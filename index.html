@@ -3386,14 +3386,14 @@
 
         <div class="container">
             <div class="hero-content">
-                <div class="hero-eyebrow">Premium Wellness Experiences</div>
-                <h1>Elevate Your <em class="gradient-text">Wellness</em> Journey</h1>
-                <p class="hero-description">
+                <div class="hero-eyebrow" id="heroEyebrow">Premium Wellness Experiences</div>
+                <h1 id="heroHeading">Elevate Your <em class="gradient-text">Wellness</em> Journey</h1>
+                <p class="hero-description" id="heroDescription">
                     Transformative Pilates events and wellness experiences for corporations, hotels, and communities. We bring people together through mindful movement and holistic well-being.
                 </p>
                 <div class="hero-buttons">
-                    <a href="#events" class="btn btn-primary magnetic-btn btn-shine">Explore Events →</a>
-                    <a href="#contact" class="btn btn-secondary magnetic-btn">Partner With Us</a>
+                    <a href="#events" class="btn btn-primary magnetic-btn btn-shine" id="heroPrimaryCta">Explore Events →</a>
+                    <a href="#contact" class="btn btn-secondary magnetic-btn" id="heroSecondaryCta">Partner With Us</a>
                 </div>
             </div>
         </div>
@@ -3672,14 +3672,14 @@
                     </div>
                 </div>
                 <div class="about-content reveal-right">
-                    <h2>More Than Fitness.<br><em>It's Intentional.</em></h2>
-                    <p>
+                    <h2 id="aboutHeading">More Than Fitness.<br><em>It's Intentional.</em></h2>
+                    <p id="aboutParagraph1">
                         Ethereal Balance was founded by <strong>Jazmin Sabah</strong> with a deeply personal mission: to create spaces where wellness becomes a bridge that connects people. Driven by her passion for bringing communities together through mindful movement, Jazmin envisioned something beyond traditional fitness—a movement rooted in intention.
                     </p>
-                    <p>
+                    <p id="aboutParagraph2">
                         What began in 2024 as intimate gatherings has blossomed into partnerships with leading hotels and corporations across San Diego and throughout Southern California. <strong>Megan Pappa</strong>, our Director of Operations and second-in-command, keeps the ship steady—this vision simply wouldn't happen without her. But at its core, Ethereal Balance remains true to Jazmin's original vision: wellness that's accessible, community-driven, and transformative.
                     </p>
-                    <p>
+                    <p id="aboutParagraph3">
                         Every event we host is designed with intention. Every movement has purpose. Every connection matters. This isn't just about exercise—it's about creating moments where people can disconnect from the noise and reconnect with themselves and each other.
                     </p>
                     <div class="about-features">
@@ -3722,8 +3722,8 @@
         <div class="container">
             <div class="contact-grid">
                 <div class="contact-info reveal-left">
-                    <h2>Let's Create Something <em class="gradient-text">Beautiful</em></h2>
-                    <p>
+                    <h2 id="contactHeading">Let's Create Something <em class="gradient-text">Beautiful</em></h2>
+                    <p id="contactDescription">
                         Whether you're looking to host a corporate wellness day, partner for hotel programming, or inquire about our community events—we'd love to hear from you.
                     </p>
                     <div class="contact-methods">
@@ -3899,7 +3899,7 @@
     <!-- Firebase SDK for public page (read-only Firestore for events + gallery) -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
-        import { getFirestore, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+        import { getFirestore, collection, getDoc, doc, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyAMk6ytOsRIp4ICQRMZrdhQe90-gMEuDDM",
@@ -3912,8 +3912,64 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+
+        async function applyWebsiteSettings() {
+            try {
+                const settingsSnap = await getDoc(doc(db, 'settings', 'store'));
+                if (settingsSnap.exists()) {
+                    const d = settingsSnap.data() || {};
+
+                    const setText = (id, value) => {
+                        if (!value) return;
+                        const el = document.getElementById(id);
+                        if (el) el.textContent = value;
+                    };
+
+                    setText('heroEyebrow', d.heroEyebrow);
+                    setText('heroDescription', d.heroDescription);
+                    setText('aboutParagraph1', d.aboutParagraph1);
+                    setText('aboutParagraph2', d.aboutParagraph2);
+                    setText('aboutParagraph3', d.aboutParagraph3);
+                    setText('contactDescription', d.contactDescription);
+
+                    if (d.heroHeading) {
+                        const heading = document.getElementById('heroHeading');
+                        if (heading) heading.innerHTML = d.heroHeading;
+                    }
+                    if (d.aboutHeading) {
+                        const heading = document.getElementById('aboutHeading');
+                        if (heading) heading.innerHTML = d.aboutHeading;
+                    }
+                    if (d.contactHeading) {
+                        const heading = document.getElementById('contactHeading');
+                        if (heading) heading.innerHTML = d.contactHeading;
+                    }
+
+                    const primaryCta = document.getElementById('heroPrimaryCta');
+                    if (primaryCta) {
+                        if (d.heroPrimaryCtaLabel) primaryCta.textContent = d.heroPrimaryCtaLabel;
+                        if (d.heroPrimaryCtaHref) primaryCta.href = d.heroPrimaryCtaHref;
+                    }
+                    const secondaryCta = document.getElementById('heroSecondaryCta');
+                    if (secondaryCta) {
+                        if (d.heroSecondaryCtaLabel) secondaryCta.textContent = d.heroSecondaryCtaLabel;
+                        if (d.heroSecondaryCtaHref) secondaryCta.href = d.heroSecondaryCtaHref;
+                    }
+
+                    const root = document.documentElement;
+                    if (d.themeCharcoal) root.style.setProperty('--charcoal', d.themeCharcoal);
+                    if (d.themeTerracotta) root.style.setProperty('--terracotta', d.themeTerracotta);
+                    if (d.themeSageDark) root.style.setProperty('--sage-dark', d.themeSageDark);
+                    if (d.themeCream) root.style.setProperty('--cream', d.themeCream);
+                }
+            } catch (e) {
+                console.log('Settings fetch skipped, using defaults:', e.message);
+            }
+        }
+
         // Fetch Firestore data and re-render when ready
         window._firestoreReady = (async () => {
+            await applyWebsiteSettings();
             try {
                 // Simple query — no composite index needed
                 const eventsSnap = await getDocs(query(
