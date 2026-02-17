@@ -6,7 +6,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import { getFirestore, collection, doc, getDoc, getDocs, addDoc, setDoc, updateDoc, deleteDoc, query, where, orderBy, limit, onSnapshot, serverTimestamp, increment as firestoreIncrement, runTransaction } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject, listAll } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js';
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject, listAll, getMetadata } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js';
 
 const firebaseConfig = {
     apiKey: "AIzaSyAMk6ytOsRIp4ICQRMZrdhQe90-gMEuDDM",
@@ -42,6 +42,7 @@ export {
     getDownloadURL,
     deleteObject,
     listAll,
+    getMetadata,
     STRIPE_PUBLISHABLE_KEY,
     FUNCTIONS_BASE_URL,
     collection,
