@@ -1342,6 +1342,241 @@
             background: var(--sage-dark);
         }
 
+        /* ========== COMMUNITY SIGNUP SECTION ========== */
+        .community {
+            padding: 100px 0;
+            background: var(--charcoal);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .community::before {
+            content: '';
+            position: absolute;
+            top: -40%;
+            right: -15%;
+            width: 50%;
+            height: 140%;
+            background: radial-gradient(ellipse, rgba(156, 175, 136, 0.08) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .community-inner {
+            max-width: 680px;
+            margin: 0 auto;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .community-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 0.8rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--sage-light);
+            margin-bottom: 20px;
+        }
+
+        .community-eyebrow::before,
+        .community-eyebrow::after {
+            content: '';
+            width: 24px;
+            height: 1px;
+            background: var(--sage);
+            opacity: 0.5;
+        }
+
+        .community h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(2rem, 4.5vw, 3rem);
+            font-weight: 400;
+            color: var(--cream);
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+
+        .community h2 em {
+            font-style: italic;
+            color: var(--sage-light);
+        }
+
+        .community-subtitle {
+            font-size: 1rem;
+            color: var(--stone);
+            line-height: 1.7;
+            margin-bottom: 40px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .community-form {
+            display: flex;
+            gap: 12px;
+            max-width: 520px;
+            margin: 0 auto 16px;
+        }
+
+        .community-form input {
+            flex: 1;
+            padding: 16px 20px;
+            border: 1.5px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--cream);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            min-width: 0;
+        }
+
+        .community-form input::placeholder {
+            color: var(--stone);
+        }
+
+        .community-form input:focus {
+            outline: none;
+            border-color: var(--sage);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .community-form button {
+            padding: 16px 32px;
+            border: none;
+            border-radius: 50px;
+            background: var(--sage);
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.06em;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            white-space: nowrap;
+        }
+
+        .community-form button:hover {
+            background: var(--sage-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(122, 145, 103, 0.3);
+        }
+
+        .community-form button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .community-phone-row {
+            display: flex;
+            gap: 12px;
+            max-width: 520px;
+            margin: 0 auto 20px;
+        }
+
+        .community-phone-row input {
+            flex: 1;
+            padding: 16px 20px;
+            border: 1.5px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--cream);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            min-width: 0;
+        }
+
+        .community-phone-row input::placeholder {
+            color: var(--stone);
+        }
+
+        .community-phone-row input:focus {
+            outline: none;
+            border-color: var(--sage);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .community-opt-in {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            max-width: 520px;
+            margin: 0 auto 24px;
+        }
+
+        .community-opt-in input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--sage);
+            flex-shrink: 0;
+        }
+
+        .community-opt-in label {
+            font-size: 0.8rem;
+            color: var(--stone);
+            line-height: 1.4;
+        }
+
+        .community-fine-print {
+            font-size: 0.75rem;
+            color: rgba(139, 134, 128, 0.6);
+            max-width: 400px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        .community-success {
+            display: none;
+            text-align: center;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .community-success.show {
+            display: block;
+        }
+
+        .community-success-icon {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .community-success h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.6rem;
+            color: var(--cream);
+            margin-bottom: 8px;
+        }
+
+        .community-success p {
+            color: var(--stone);
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 600px) {
+            .community {
+                padding: 70px 0;
+            }
+
+            .community-form {
+                flex-direction: column;
+            }
+
+            .community-form button {
+                padding: 16px;
+            }
+
+            .community-phone-row {
+                flex-direction: column;
+            }
+        }
+
         /* Contact Section */
         .contact {
             padding: 140px 0;
@@ -3717,6 +3952,43 @@
         </div>
     </section>
 
+    <!-- Community Signup Section -->
+    <section class="community" id="community">
+        <div class="container">
+            <div class="community-inner reveal">
+                <div class="community-eyebrow">Stay Connected</div>
+                <h2>Join the <em>Community</em></h2>
+                <p class="community-subtitle">
+                    Be the first to know about upcoming events, exclusive workshops, and wellness inspiration delivered straight to you.
+                </p>
+                <div id="communityFormWrapper">
+                    <form id="communitySignupForm" onsubmit="return false;">
+                        <div class="community-form">
+                            <input type="text" id="communityName" placeholder="Your name" required>
+                            <input type="email" id="communityEmail" placeholder="Email address" required>
+                        </div>
+                        <div class="community-phone-row">
+                            <input type="tel" id="communityPhone" placeholder="Phone number (optional, for text updates)">
+                        </div>
+                        <div class="community-opt-in">
+                            <input type="checkbox" id="communitySmsOptIn">
+                            <label for="communitySmsOptIn">I'd like to receive text updates about events</label>
+                        </div>
+                        <div class="community-form" style="margin-bottom: 0;">
+                            <button type="submit" id="communitySubmitBtn" style="flex: none; margin: 0 auto;">Join the Community</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="community-success" id="communitySuccess">
+                    <span class="community-success-icon">&#10004;</span>
+                    <h3>Welcome to the Community</h3>
+                    <p>You're in! We'll keep you posted on everything Ethereal Balance.</p>
+                </div>
+                <p class="community-fine-print">We respect your privacy. Unsubscribe anytime.</p>
+            </div>
+        </div>
+    </section>
+
     <!-- Contact Section -->
     <section class="contact" id="contact">
         <div class="container">
@@ -3899,7 +4171,7 @@
     <!-- Firebase SDK for public page (read-only Firestore for events + gallery) -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
-        import { getFirestore, collection, getDoc, doc, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+        import { getFirestore, collection, getDoc, doc, getDocs, addDoc, query, where, Timestamp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyAMk6ytOsRIp4ICQRMZrdhQe90-gMEuDDM",
@@ -4057,6 +4329,44 @@
             }
             return true;
         })();
+
+        // ==================== COMMUNITY SIGNUP ====================
+        const communityForm = document.getElementById('communitySignupForm');
+        if (communityForm) {
+            communityForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('communitySubmitBtn');
+                const name = document.getElementById('communityName').value.trim();
+                const email = document.getElementById('communityEmail').value.trim();
+                const phone = document.getElementById('communityPhone').value.trim();
+                const smsOptIn = document.getElementById('communitySmsOptIn').checked;
+
+                if (!name || !email) return;
+
+                btn.disabled = true;
+                btn.textContent = 'Joining...';
+
+                try {
+                    await addDoc(collection(db, 'subscribers'), {
+                        name,
+                        email: email.toLowerCase(),
+                        phone: phone || '',
+                        smsOptIn,
+                        source: 'website',
+                        joinedAt: Timestamp.now(),
+                        active: true
+                    });
+
+                    document.getElementById('communityFormWrapper').style.display = 'none';
+                    document.getElementById('communitySuccess').classList.add('show');
+                } catch (err) {
+                    console.error('Signup error:', err);
+                    btn.disabled = false;
+                    btn.textContent = 'Join the Community';
+                    alert('Something went wrong. Please try again.');
+                }
+            });
+        }
     </script>
     <script>
         // ==================== EVENTS RENDERING ====================
