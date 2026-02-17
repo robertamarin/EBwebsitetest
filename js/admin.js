@@ -14,7 +14,7 @@ import {
 // IMAGE UPLOAD CONFIG & PROTECTION
 // ============================================
 const UPLOAD_CONFIG = {
-    maxFileSize: 2 * 1024 * 1024,      // 2MB per file
+    maxFileSize: 10 * 1024 * 1024,     // 10MB per file
     maxDimension: 1200,                  // max width or height in px
     jpegQuality: 0.8,                    // 80% JPEG quality
     allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
@@ -92,7 +92,7 @@ function validateFile(file) {
     }
     if (file.size > UPLOAD_CONFIG.maxFileSize) {
         const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
-        return `"${file.name}" is ${sizeMB}MB. Max is 2MB.`;
+        return `"${file.name}" is ${sizeMB}MB. Max is 10MB.`;
     }
     return null;
 }
