@@ -250,40 +250,64 @@ window.removePendingImage = function(zoneId, previewId, index) {
 // ============================================
 // STORAGE USAGE TRACKER
 // ============================================
+let storageModulePromise = null;
+
+async function getMetadataSize(itemRef) {
+    try {
+        if (!storageModulePromise) {
+            storageModulePromise = import('https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js');
+        }
+        const storageModule = await storageModulePromise;
+        if (typeof storageModule.getMetadata !== 'function') return null;
+
+        const metadata = await storageModule.getMetadata(itemRef);
+        return metadata?.size || 0;
+    } catch (error) {
+        return null;
+    }
+}
+
+async function collectStorageUsage(folderRef) {
+    const result = await listAll(folderRef);
+
+    let totalBytes = 0;
+    let totalFiles = 0;
+
+    for (const itemRef of result.items) {
+        const size = await getMetadataSize(itemRef);
+        totalBytes += size == null ? 300 * 1024 : size;
+        totalFiles += 1;
+    }
+
+    for (const prefixRef of result.prefixes) {
+        const subfolderUsage = await collectStorageUsage(prefixRef);
+        totalBytes += subfolderUsage.totalBytes;
+        totalFiles += subfolderUsage.totalFiles;
+    }
+
+    return { totalBytes, totalFiles };
+}
+
 async function updateStorageUsage() {
     const barFill = document.getElementById('storageBarFill');
     const usedText = document.getElementById('storageUsedText');
     if (!barFill || !usedText) return;
 
     try {
-        // List all items in the images/ folder to estimate usage
         const imagesRef = storageRef(storage, 'images');
-        const result = await listAll(imagesRef);
+        const { totalBytes, totalFiles } = await collectStorageUsage(imagesRef);
 
-        // Count files across all sub-folders
-        let totalFiles = 0;
-        const folders = [result]; // Start with root images/
-        // Check sub-folders
-        for (const folderRef of result.prefixes) {
-            const subResult = await listAll(folderRef);
-            totalFiles += subResult.items.length;
-        }
-        totalFiles += result.items.length;
-
-        // Estimate: average compressed image is ~300KB
-        const estimatedBytes = totalFiles * 300 * 1024;
         const limitBytes = UPLOAD_CONFIG.storageLimitGB * 1024 * 1024 * 1024;
-        const percent = Math.min(100, (estimatedBytes / limitBytes) * 100);
-
-        const usedMB = (estimatedBytes / (1024 * 1024)).toFixed(1);
+        const percent = Math.min(100, (totalBytes / limitBytes) * 100);
+        const usedMB = (totalBytes / (1024 * 1024)).toFixed(1);
 
         barFill.style.width = percent + '%';
         barFill.className = 'storage-bar-fill' +
             (percent >= 90 ? ' danger' : percent >= UPLOAD_CONFIG.warningThresholdPercent ? ' warning' : '');
 
-        usedText.textContent = `~${usedMB} MB used (${totalFiles} images)`;
+        usedText.textContent = `${usedMB} MB used (${totalFiles} images)`;
     } catch (e) {
-        usedText.textContent = 'Unable to check (enable Storage in Firebase Console)';
+        usedText.textContent = 'Unable to check (enable Storage access in Firebase Console)';
         barFill.style.width = '0%';
     }
 }
