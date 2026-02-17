@@ -250,6 +250,23 @@ window.removePendingImage = function(zoneId, previewId, index) {
 // ============================================
 // STORAGE USAGE TRACKER
 // ============================================
+let storageModulePromise = null;
+
+async function getMetadataSize(itemRef) {
+    try {
+        if (!storageModulePromise) {
+            storageModulePromise = import('https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js');
+        }
+        const storageModule = await storageModulePromise;
+        if (typeof storageModule.getMetadata !== 'function') return null;
+
+        const metadata = await storageModule.getMetadata(itemRef);
+        return metadata?.size || 0;
+    } catch (error) {
+        return null;
+    }
+}
+
 async function collectStorageUsage(folderRef) {
     const result = await listAll(folderRef);
 
@@ -257,8 +274,8 @@ async function collectStorageUsage(folderRef) {
     let totalFiles = 0;
 
     for (const itemRef of result.items) {
-        const metadata = await getMetadata(itemRef);
-        totalBytes += metadata.size || 0;
+        const size = await getMetadataSize(itemRef);
+        totalBytes += size == null ? 300 * 1024 : size;
         totalFiles += 1;
     }
 
