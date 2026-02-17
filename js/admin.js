@@ -375,6 +375,7 @@ window.switchAdminSection = function(section) {
         case 'products': loadProducts(); break;
         case 'events': loadEvents(); break;
         case 'gallery': loadGalleryItems(); break;
+        case 'community': loadSubscribers(); break;
         case 'orders': loadOrders(); break;
         case 'partners': loadPartners(); break;
         case 'settings': loadSettings(); updateStorageUsage(); break;
@@ -396,9 +397,10 @@ window.toggleAdminSidebar = function() {
 // ============================================
 async function loadDashboardData() {
     try {
-        const [productsSnap, ordersSnap] = await Promise.all([
+        const [productsSnap, ordersSnap, subscribersSnap] = await Promise.all([
             getDocs(query(collection(db, 'products'), where('isActive', '==', true))),
-            getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(10)))
+            getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(10))),
+            getDocs(collection(db, 'subscribers'))
         ]);
 
         const statsEl = document.getElementById('adminStats');
@@ -422,6 +424,10 @@ async function loadDashboardData() {
             <div class="admin-stat-card">
                 <div class="admin-stat-label">Revenue</div>
                 <div class="admin-stat-value">$${(totalRevenue / 100).toFixed(2)}</div>
+            </div>
+            <div class="admin-stat-card">
+                <div class="admin-stat-label">Community Members</div>
+                <div class="admin-stat-value">${subscribersSnap.size}</div>
             </div>
         `;
 
@@ -1471,6 +1477,142 @@ window.seedPartners = async function() {
         console.error('Error seeding partners:', error);
         showToast('Error seeding partners. Check console for details.', 'error');
     }
+};
+
+// ============================================
+// COMMUNITY / SUBSCRIBERS
+// ============================================
+let allSubscribers = [];
+
+async function loadSubscribers() {
+    try {
+        const snap = await getDocs(query(collection(db, 'subscribers'), orderBy('joinedAt', 'desc')));
+        allSubscribers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        // Stats
+        const total = allSubscribers.length;
+        const smsCount = allSubscribers.filter(s => s.smsOptIn).length;
+        const thisMonth = allSubscribers.filter(s => {
+            if (!s.joinedAt) return false;
+            const joined = s.joinedAt.toDate ? s.joinedAt.toDate() : new Date(s.joinedAt);
+            const now = new Date();
+            return joined.getMonth() === now.getMonth() && joined.getFullYear() === now.getFullYear();
+        }).length;
+
+        const statsEl = document.getElementById('communityStats');
+        if (statsEl) {
+            statsEl.innerHTML = `
+                <div class="admin-stat-card">
+                    <div class="admin-stat-label">Total Members</div>
+                    <div class="admin-stat-value">${total}</div>
+                </div>
+                <div class="admin-stat-card">
+                    <div class="admin-stat-label">SMS Opted In</div>
+                    <div class="admin-stat-value">${smsCount}</div>
+                </div>
+                <div class="admin-stat-card">
+                    <div class="admin-stat-label">Joined This Month</div>
+                    <div class="admin-stat-value">${thisMonth}</div>
+                </div>
+            `;
+        }
+
+        // Table
+        const tableEl = document.getElementById('adminSubscribersTable');
+        if (!tableEl) return;
+
+        if (allSubscribers.length === 0) {
+            tableEl.innerHTML = `
+                <div class="admin-empty-state">
+                    <p>No community members yet. Once people sign up on the website, they'll appear here.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let rows = allSubscribers.map(s => {
+            const joinDate = s.joinedAt
+                ? (s.joinedAt.toDate ? s.joinedAt.toDate() : new Date(s.joinedAt)).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                : '—';
+            return `<tr>
+                <td>${escapeHtml(s.name)}</td>
+                <td>${escapeHtml(s.email)}</td>
+                <td>${escapeHtml(s.phone) || '—'}</td>
+                <td>${s.smsOptIn ? '<span class="status-badge active">Yes</span>' : '<span class="status-badge inactive">No</span>'}</td>
+                <td>${joinDate}</td>
+                <td>
+                    <div class="admin-actions">
+                        <button class="admin-action-btn delete" title="Remove" onclick="removeSubscriber('${s.id}', '${escapeAttr(s.email)}')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2v2"/></svg>
+                        </button>
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+
+        tableEl.innerHTML = `
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>SMS</th>
+                        <th>Joined</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        `;
+    } catch (error) {
+        console.error('Error loading subscribers:', error);
+        showToast('Error loading community data', 'error');
+    }
+}
+
+window.removeSubscriber = async function(id, email) {
+    if (!confirm(`Remove ${email} from the community?`)) return;
+    try {
+        await deleteDoc(doc(db, 'subscribers', id));
+        showToast('Member removed', 'success');
+        loadSubscribers();
+    } catch (error) {
+        console.error('Error removing subscriber:', error);
+        showToast('Error removing member', 'error');
+    }
+};
+
+window.exportSubscribers = function() {
+    if (allSubscribers.length === 0) {
+        showToast('No subscribers to export', 'error');
+        return;
+    }
+
+    const headers = ['Name', 'Email', 'Phone', 'SMS Opted In', 'Joined'];
+    const csvRows = [headers.join(',')];
+
+    allSubscribers.forEach(s => {
+        const joinDate = s.joinedAt
+            ? (s.joinedAt.toDate ? s.joinedAt.toDate() : new Date(s.joinedAt)).toISOString().split('T')[0]
+            : '';
+        csvRows.push([
+            `"${(s.name || '').replace(/"/g, '""')}"`,
+            `"${(s.email || '').replace(/"/g, '""')}"`,
+            `"${(s.phone || '').replace(/"/g, '""')}"`,
+            s.smsOptIn ? 'Yes' : 'No',
+            joinDate
+        ].join(','));
+    });
+
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ethereal-balance-community-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('CSV exported', 'success');
 };
 
 // ============================================
