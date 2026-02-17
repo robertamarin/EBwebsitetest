@@ -4030,9 +4030,16 @@
 
             try {
                 const partnersSnap = await getDocs(collection(db, 'partners'));
+                const seenPartnerNames = new Set();
                 window._firestorePartners = partnersSnap.docs
                     .map(doc => doc.data())
-                    .filter(p => p && p.name && p.url);
+                    .filter(p => p && p.name && p.url)
+                    .filter(p => {
+                        const normalizedName = typeof p.name === 'string' ? p.name.trim().toLowerCase() : '';
+                        if (!normalizedName || seenPartnerNames.has(normalizedName)) return false;
+                        seenPartnerNames.add(normalizedName);
+                        return true;
+                    });
             } catch (e) {
                 console.log('Partners Firestore fetch skipped, using static data:', e.message);
             }
@@ -4188,7 +4195,12 @@
             list.querySelectorAll('[data-source="custom"]').forEach(el => el.remove());
 
             const customPartners = Array.isArray(window._firestorePartners) ? window._firestorePartners : [];
+            const seenPartnerNames = new Set();
             customPartners.forEach(partner => {
+                const normalizedName = typeof partner.name === 'string' ? partner.name.trim().toLowerCase() : '';
+                if (!normalizedName || seenPartnerNames.has(normalizedName)) return;
+
+                seenPartnerNames.add(normalizedName);
                 const li = document.createElement('li');
                 li.dataset.source = 'custom';
                 const a = document.createElement('a');

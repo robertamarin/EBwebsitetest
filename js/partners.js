@@ -18,9 +18,13 @@ async function loadPartners() {
 
         const snapshot = await getDocs(q);
         const partners = [];
+        const seenPartnerNames = new Set();
         snapshot.forEach(doc => {
             const data = doc.data();
-            if (data.isActive !== false) {
+            const normalizedName = typeof data.name === 'string' ? data.name.trim().toLowerCase() : '';
+
+            if (data.isActive !== false && normalizedName && !seenPartnerNames.has(normalizedName)) {
+                seenPartnerNames.add(normalizedName);
                 partners.push({ id: doc.id, ...data });
             }
         });
