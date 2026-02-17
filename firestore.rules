@@ -1,49 +1,37 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Products: public read if isActive == true, admin write
     match /products/{productId} {
       allow read: if resource.data.isActive == true;
-      allow write: if request.auth != null;
+      allow read, write: if request.auth != null;
     }
-
-    // Events: public read if active == true, admin write
-    match /events/{eventId} {
-      allow read: if resource.data.active == true;
-      allow write: if request.auth != null;
-    }
-
-    // Gallery: public read if active == true, admin write
-    match /gallery/{galleryId} {
-      allow read: if resource.data.active == true;
-      allow write: if request.auth != null;
-    }
-
-    // Partners: public read, admin write
-    match /partners/{partnerId} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-
-    // Subscribers: public create (website signup), admin read/delete
-    match /subscribers/{subscriberId} {
-      allow create: if true
-                    && request.resource.data.keys().hasAll(['name', 'email', 'active', 'joinedAt'])
-                    && request.resource.data.email is string
-                    && request.resource.data.name is string;
-      allow read, delete: if request.auth != null;
-    }
-
-    // Orders: admin only
     match /orders/{orderId} {
       allow read, write: if request.auth != null;
     }
-
-    // Settings: public read, admin write
-    match /settings/{settingId} {
+    match /settings/{doc} {
       allow read: if true;
       allow write: if request.auth != null;
+    }
+    match /mail/{mailId} {
+      allow create: if false;
+    }
+    match /events/{eventId} {
+      allow read: if resource.data.active == true;
+      allow read, write: if request.auth != null;
+    }
+    match /gallery/{galleryId} {
+      allow read: if resource.data.active == true;
+      allow read, write: if request.auth != null;
+    }
+    match /partners/{partnerId} {
+      allow read: if resource.data.isActive == true;
+      allow read, write: if request.auth != null;
+    }
+    match /subscribers/{subscriberId} {
+      allow create: if request.resource.data.keys().hasAll(['name', 'email', 'active', 'joinedAt'])
+                    && request.resource.data.email is string
+                    && request.resource.data.name is string;
+      allow read, delete: if request.auth != null;
     }
   }
 }
