@@ -6,7 +6,8 @@
 // SETUP:
 // 1. firebase functions:config:set stripe.secret_key="sk_live_xxx"
 // 2. firebase functions:config:set stripe.webhook_secret="whsec_xxx"
-// 3. firebase deploy --only functions
+// 3. firebase functions:config:set gmail.email="you@gmail.com" gmail.app_password="xxxx xxxx xxxx xxxx"
+// 4. firebase deploy --only functions
 // ============================================
 
 const functions = require("firebase-functions");
@@ -18,6 +19,17 @@ const db = admin.firestore();
 
 // Initialize Stripe with secret key from Firebase config
 const stripe = require("stripe")(functions.config().stripe.secret_key);
+
+// Initialize Nodemailer with Gmail
+// Config set via: firebase functions:config:set gmail.email="you@gmail.com" gmail.app_password="xxxx xxxx xxxx xxxx"
+const nodemailer = require("nodemailer");
+const gmailConfig = functions.config().gmail || {};
+const mailTransport = gmailConfig.email
+  ? nodemailer.createTransport({
+      service: "gmail",
+      auth: { user: gmailConfig.email, pass: gmailConfig.app_password },
+    })
+  : null;
 
 // Initialize Twilio (config set via: firebase functions:config:set twilio.account_sid="ACxxx" twilio.auth_token="xxx" twilio.from_number="+1xxxxx")
 const twilioConfig = functions.config().twilio || {};
@@ -427,8 +439,8 @@ exports.sendSmsBlast = functions.https.onRequest((req, res) => {
 // ============================================
 // EMAIL BLAST
 // ============================================
-// Sends an email to all active subscribers via the Firestore mail collection
-// (Uses Firebase "Trigger Email" extension)
+// Sends an email to all active subscribers via Nodemailer + Gmail
+// Requires: firebase functions:config:set gmail.email="you@gmail.com" gmail.app_password="xxxx xxxx xxxx xxxx"
 exports.sendEmailBlast = functions.https.onRequest((req, res) => {
   corsHandler(req, res, async () => {
     if (req.method === "OPTIONS") { res.status(204).send(""); return; }
@@ -440,6 +452,11 @@ exports.sendEmailBlast = functions.https.onRequest((req, res) => {
     if (!token) { res.status(401).json({ error: "Unauthorized" }); return; }
     try { await admin.auth().verifyIdToken(token); } catch (e) {
       res.status(401).json({ error: "Invalid token" }); return;
+    }
+
+    if (!mailTransport) {
+      res.status(500).json({ error: "Gmail not configured. Run: firebase functions:config:set gmail.email=\"you@gmail.com\" gmail.app_password=\"xxxx xxxx xxxx xxxx\"" });
+      return;
     }
 
     const { subject, htmlBody } = req.body;
@@ -456,19 +473,26 @@ exports.sendEmailBlast = functions.https.onRequest((req, res) => {
         .map(d => d.data())
         .filter(s => s.email && s.email.trim());
 
-      let sent = 0;
+      let sent = 0, failed = 0;
+      const fromName = "Ethereal Balance";
+      const fromEmail = gmailConfig.email;
+
       for (const sub of recipients) {
-        await db.collection("mail").add({
-          to: sub.email.trim(),
-          message: {
+        try {
+          await mailTransport.sendMail({
+            from: `"${fromName}" <${fromEmail}>`,
+            to: sub.email.trim(),
             subject: subject.trim(),
             html: htmlBody,
-          },
-        });
-        sent++;
+          });
+          sent++;
+        } catch (err) {
+          console.error(`Email failed for ${sub.email}:`, err.message);
+          failed++;
+        }
       }
 
-      res.json({ sent, total: recipients.length });
+      res.json({ sent, failed, total: recipients.length });
     } catch (error) {
       console.error("Email blast error:", error);
       res.status(500).json({ error: "Failed to send email blast" });
