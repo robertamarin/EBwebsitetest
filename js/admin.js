@@ -1685,40 +1685,31 @@ window.sendBlast = async function() {
         const subject = document.getElementById('blastSubject').value.trim();
         if (!subject) { showToast('Please enter a subject line', 'error'); return; }
 
-        const count = allSubscribers.filter(s => s.active && s.email && s.email.trim()).length;
-        if (!confirm(`Send this email to ${count} member(s)?`)) return;
+        const emails = allSubscribers
+            .filter(s => s.active && s.email && s.email.trim())
+            .map(s => s.email.trim());
 
-        // Wrap plain text in styled HTML template
-        const htmlBody = `
-            <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #FDFCFA; padding: 40px;">
-                <div style="text-align: center; margin-bottom: 32px;">
-                    <h1 style="font-size: 24px; color: #2D2D2D; font-weight: normal;">${subject}</h1>
-                </div>
-                <div style="font-family: Arial, sans-serif; color: #8B8680; font-size: 14px; line-height: 1.6;">
-                    ${message.replace(/\n/g, '<br>')}
-                </div>
-                <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #E8E2D9;">
-                    <p style="font-family: Arial, sans-serif; color: #8B8680; font-size: 12px;">
-                        Ethereal Balance | ethereal-balance.com
-                    </p>
-                </div>
-            </div>
-        `;
+        if (emails.length === 0) { showToast('No members with email addresses', 'error'); return; }
 
+        // Copy all emails to clipboard (BCC-ready)
+        const emailList = emails.join(', ');
         try {
-            showToast('Sending email blast…', 'success');
-            const resp = await fetch(`${FUNCTIONS_BASE_URL}/sendEmailBlast`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ subject, htmlBody })
-            });
-            const data = await resp.json();
-            if (!resp.ok) throw new Error(data.error || 'Failed');
-            showToast(`Email sent to ${data.sent} member(s)`, 'success');
-        } catch (err) {
-            console.error('Email blast error:', err);
-            showToast('Error sending email: ' + err.message, 'error');
+            await navigator.clipboard.writeText(emailList);
+        } catch (e) {
+            // Fallback for older browsers
+            const ta = document.createElement('textarea');
+            ta.value = emailList;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
         }
+
+        // Open Gmail compose with subject and body pre-filled
+        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
+        window.open(gmailUrl, '_blank');
+
+        showToast(`${emails.length} email(s) copied to clipboard! Paste into BCC in Gmail.`, 'success');
     }
 
     document.getElementById('blastMessage').value = '';
