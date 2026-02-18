@@ -1615,10 +1615,30 @@ window.exportSubscribers = function() {
     showToast('CSV exported', 'success');
 };
 
+window.deleteAllSubscribers = async function() {
+    if (!confirm('Delete ALL community members? This cannot be undone.')) return;
+    if (!confirm('Are you absolutely sure? This will remove every subscriber.')) return;
+    try {
+        const snap = await getDocs(collection(db, 'subscribers'));
+        if (snap.empty) { showToast('No members to delete', 'error'); return; }
+        const BATCH_SIZE = 500;
+        const docs = snap.docs;
+        for (let i = 0; i < docs.length; i += BATCH_SIZE) {
+            const batch = writeBatch(db);
+            docs.slice(i, i + BATCH_SIZE).forEach(d => batch.delete(d.ref));
+            await batch.commit();
+        }
+        showToast(`Deleted ${docs.length} member(s)`, 'success');
+        loadSubscribers();
+    } catch (err) {
+        console.error('Error deleting subscribers:', err);
+        showToast('Error deleting members', 'error');
+    }
+};
+
 window.importSubscribersCSV = async function(input) {
     const file = input.files[0];
     if (!file) return;
-    // Reset the input so the same file can be re-selected if needed
     input.value = '';
 
     const text = await file.text();
@@ -1628,18 +1648,7 @@ window.importSubscribersCSV = async function(input) {
         return;
     }
 
-    // Parse header row to find column indices (case-insensitive)
-    const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, '').trim().toLowerCase());
-    const nameIdx  = headers.findIndex(h => h === 'name');
-    const emailIdx = headers.findIndex(h => h === 'email');
-    const phoneIdx = headers.findIndex(h => h.includes('phone'));
-
-    if (emailIdx === -1) {
-        showToast('CSV must have an "Email" column', 'error');
-        return;
-    }
-
-    // Parse CSV rows into objects
+    // Robust CSV row parser (handles quotes, commas in values)
     function parseRow(line) {
         const cols = [];
         let cur = '', inQuote = false;
@@ -1653,22 +1662,37 @@ window.importSubscribersCSV = async function(input) {
         return cols;
     }
 
+    // Use the same parser for headers and data rows
+    const headers = parseRow(lines[0]).map(h => h.toLowerCase());
+    const nameIdx  = headers.findIndex(h => h === 'name');
+    const emailIdx = headers.findIndex(h => h === 'email');
+    const phoneIdx = headers.findIndex(h => h.includes('phone'));
+
+    console.log('[CSV Import] Headers:', headers);
+    console.log('[CSV Import] Indices — name:', nameIdx, 'email:', emailIdx, 'phone:', phoneIdx);
+
+    if (emailIdx === -1) {
+        showToast('CSV must have an "Email" column', 'error');
+        return;
+    }
+
     const incoming = [];
     for (let i = 1; i < lines.length; i++) {
         const cols = parseRow(lines[i]);
         const email = (cols[emailIdx] || '').toLowerCase().trim();
         if (!email) continue;
-        incoming.push({
-            name:  nameIdx  !== -1 ? (cols[nameIdx]  || '').trim() : '',
-            email,
-            phone: phoneIdx !== -1 ? (cols[phoneIdx] || '').trim() : '',
-        });
+        const phone = phoneIdx !== -1 ? (cols[phoneIdx] || '').trim() : '';
+        const name  = nameIdx  !== -1 ? (cols[nameIdx]  || '').trim() : '';
+        if (i <= 3) console.log(`[CSV Import] Row ${i}:`, { name, email, phone, raw: cols });
+        incoming.push({ name, email, phone });
     }
 
     if (incoming.length === 0) {
         showToast('No valid rows found in CSV', 'error');
         return;
     }
+
+    console.log(`[CSV Import] Parsed ${incoming.length} rows. Phones found: ${incoming.filter(m => m.phone).length}`);
 
     // Load existing emails from Firestore to deduplicate
     showToast('Checking for duplicates…', 'success');
