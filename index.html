@@ -4284,7 +4284,7 @@
                             date: d.date || '',
                             coverImage: d.coverImage || '',
                             coverLabel: d.coverLabel || d.title || '',
-                            _sortOrder: d.sortOrder || 0,
+                            _createdAt: d.createdAt || null,
                             photos: (d.photos || []).map(p => ({
                                 src: p.url || p.src || '',
                                 label: p.label || '',
@@ -4293,8 +4293,12 @@
                             }))
                         };
                     });
-                    // Sort by sortOrder client-side
-                    window._firestoreGallery.sort((a, b) => (a._sortOrder || 0) - (b._sortOrder || 0));
+                    // Sort by createdAt descending (newest first)
+                    window._firestoreGallery.sort((a, b) => {
+                        const aTime = a._createdAt ? (a._createdAt.toMillis ? a._createdAt.toMillis() : new Date(a._createdAt).getTime()) : 0;
+                        const bTime = b._createdAt ? (b._createdAt.toMillis ? b._createdAt.toMillis() : new Date(b._createdAt).getTime()) : 0;
+                        return bTime - aTime;
+                    });
                 }
             } catch (e) {
                 console.log('Gallery Firestore fetch skipped, using static data:', e.message);
