@@ -153,7 +153,7 @@ h1, h2, h3, h4 {
 .admin-sidebar-logo img {
     width: 42px;
     height: 42px;
-    filter: brightness(0) invert(1);
+    border-radius: 8px;
     flex-shrink: 0;
 }
 
