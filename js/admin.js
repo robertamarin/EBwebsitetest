@@ -7,7 +7,8 @@ import {
     query, where, orderBy, limit, onSnapshot,
     serverTimestamp, firestoreIncrement, writeBatch, Timestamp,
     signInWithEmailAndPassword, onAuthStateChanged, signOut,
-    storageRef, uploadBytes, getDownloadURL, deleteObject, listAll, getMetadata
+    storageRef, uploadBytes, getDownloadURL, deleteObject, listAll, getMetadata,
+    FUNCTIONS_BASE_URL
 } from './firebase-config.js';
 
 // ============================================
@@ -1565,6 +1566,7 @@ async function loadSubscribers() {
                 <tbody>${rows}</tbody>
             </table>
         `;
+        updateRecipientCount();
     } catch (error) {
         console.error('Error loading subscribers:', error);
         showToast('Error loading community data', 'error');
@@ -1613,6 +1615,114 @@ window.exportSubscribers = function() {
     a.click();
     URL.revokeObjectURL(url);
     showToast('CSV exported', 'success');
+};
+
+// ============================================
+// MESSAGE BLAST (SMS / EMAIL)
+// ============================================
+let blastType = 'sms';
+
+window.setBlastType = function(type) {
+    blastType = type;
+    const smsBtn = document.getElementById('blastTypeSms');
+    const emailBtn = document.getElementById('blastTypeEmail');
+    const subjectRow = document.getElementById('blastSubjectRow');
+    const messageBox = document.getElementById('blastMessage');
+
+    if (type === 'sms') {
+        smsBtn.className = 'btn-admin-primary';
+        emailBtn.className = 'btn-admin-secondary';
+        subjectRow.style.display = 'none';
+        messageBox.placeholder = 'Type your SMS message…';
+        messageBox.rows = 4;
+    } else {
+        smsBtn.className = 'btn-admin-secondary';
+        emailBtn.className = 'btn-admin-primary';
+        subjectRow.style.display = 'block';
+        messageBox.placeholder = 'Type your email body (HTML supported)…';
+        messageBox.rows = 8;
+    }
+    updateRecipientCount();
+};
+
+function updateRecipientCount() {
+    const el = document.getElementById('blastRecipientCount');
+    if (!el) return;
+    if (blastType === 'sms') {
+        const count = allSubscribers.filter(s => s.smsOptIn && s.phone && s.phone.trim()).length;
+        el.textContent = `${count} recipient(s) with phone + SMS opt-in`;
+    } else {
+        const count = allSubscribers.filter(s => s.active && s.email && s.email.trim()).length;
+        el.textContent = `${count} recipient(s) with email`;
+    }
+}
+
+window.sendBlast = async function() {
+    const message = document.getElementById('blastMessage').value.trim();
+    if (!message) { showToast('Please enter a message', 'error'); return; }
+
+    const token = await auth.currentUser.getIdToken();
+
+    if (blastType === 'sms') {
+        const count = allSubscribers.filter(s => s.smsOptIn && s.phone && s.phone.trim()).length;
+        if (!confirm(`Send this SMS to ${count} member(s)?`)) return;
+
+        try {
+            showToast('Sending SMS blast…', 'success');
+            const resp = await fetch(`${FUNCTIONS_BASE_URL}/sendSmsBlast`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ message })
+            });
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data.error || 'Failed');
+            showToast(`SMS sent to ${data.sent} member(s)${data.failed ? `, ${data.failed} failed` : ''}`, 'success');
+        } catch (err) {
+            console.error('SMS blast error:', err);
+            showToast('Error sending SMS: ' + err.message, 'error');
+        }
+    } else {
+        const subject = document.getElementById('blastSubject').value.trim();
+        if (!subject) { showToast('Please enter a subject line', 'error'); return; }
+
+        const count = allSubscribers.filter(s => s.active && s.email && s.email.trim()).length;
+        if (!confirm(`Send this email to ${count} member(s)?`)) return;
+
+        // Wrap plain text in styled HTML template
+        const htmlBody = `
+            <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #FDFCFA; padding: 40px;">
+                <div style="text-align: center; margin-bottom: 32px;">
+                    <h1 style="font-size: 24px; color: #2D2D2D; font-weight: normal;">${subject}</h1>
+                </div>
+                <div style="font-family: Arial, sans-serif; color: #8B8680; font-size: 14px; line-height: 1.6;">
+                    ${message.replace(/\n/g, '<br>')}
+                </div>
+                <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #E8E2D9;">
+                    <p style="font-family: Arial, sans-serif; color: #8B8680; font-size: 12px;">
+                        Ethereal Balance | ethereal-balance.com
+                    </p>
+                </div>
+            </div>
+        `;
+
+        try {
+            showToast('Sending email blast…', 'success');
+            const resp = await fetch(`${FUNCTIONS_BASE_URL}/sendEmailBlast`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ subject, htmlBody })
+            });
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data.error || 'Failed');
+            showToast(`Email sent to ${data.sent} member(s)`, 'success');
+        } catch (err) {
+            console.error('Email blast error:', err);
+            showToast('Error sending email: ' + err.message, 'error');
+        }
+    }
+
+    document.getElementById('blastMessage').value = '';
+    document.getElementById('blastSubject').value = '';
 };
 
 window.deleteAllSubscribers = async function() {
@@ -1718,7 +1828,7 @@ window.importSubscribersCSV = async function(input) {
                 name:     m.name,
                 email:    m.email,
                 phone:    m.phone,
-                smsOptIn: false,
+                smsOptIn: true,
                 active:   true,
                 source:   'csv-import',
                 joinedAt: Timestamp.fromDate(now),

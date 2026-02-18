@@ -141,6 +141,24 @@
                     </div>
                 </div>
                 <div class="admin-stats-grid" id="communityStats"></div>
+
+                <!-- Message Blast Composer -->
+                <div style="background:var(--cream);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:24px;">
+                    <h3 style="margin:0 0 16px;font-size:16px;color:var(--charcoal);">Send Message Blast</h3>
+                    <div style="display:flex;gap:8px;margin-bottom:12px;">
+                        <button id="blastTypeSms" class="btn-admin-primary" onclick="setBlastType('sms')" style="font-size:13px;padding:8px 16px;">SMS</button>
+                        <button id="blastTypeEmail" class="btn-admin-secondary" onclick="setBlastType('email')" style="font-size:13px;padding:8px 16px;">Email</button>
+                    </div>
+                    <div id="blastSubjectRow" style="display:none;margin-bottom:12px;">
+                        <input type="text" id="blastSubject" placeholder="Email subject line…" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:white;">
+                    </div>
+                    <textarea id="blastMessage" rows="4" placeholder="Type your message…" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;background:white;"></textarea>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
+                        <span id="blastRecipientCount" style="font-size:13px;color:var(--stone);"></span>
+                        <button class="btn-admin-primary" onclick="sendBlast()" style="font-size:13px;padding:8px 20px;">Send</button>
+                    </div>
+                </div>
+
                 <div class="admin-table-container" id="adminSubscribersTable">
                     <p style="padding: 40px; text-align: center; color: var(--stone);">Loading...</p>
                 </div>

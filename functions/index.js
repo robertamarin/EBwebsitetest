@@ -19,6 +19,12 @@ const db = admin.firestore();
 // Initialize Stripe with secret key from Firebase config
 const stripe = require("stripe")(functions.config().stripe.secret_key);
 
+// Initialize Twilio (config set via: firebase functions:config:set twilio.account_sid="ACxxx" twilio.auth_token="xxx" twilio.from_number="+1xxxxx")
+const twilioConfig = functions.config().twilio || {};
+const twilioClient = twilioConfig.account_sid
+  ? require("twilio")(twilioConfig.account_sid, twilioConfig.auth_token)
+  : null;
+
 // CORS middleware - restrict to your domain
 const corsHandler = cors({
   origin: [
@@ -353,4 +359,119 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
   }
 
   res.json({ received: true });
+});
+
+// ============================================
+// SMS BLAST
+// ============================================
+// Sends an SMS to all subscribers with smsOptIn=true and a phone number
+// Requires: firebase functions:config:set twilio.account_sid="ACxxx" twilio.auth_token="xxx" twilio.from_number="+1xxxxx"
+exports.sendSmsBlast = functions.https.onRequest((req, res) => {
+  corsHandler(req, res, async () => {
+    if (req.method === "OPTIONS") { res.status(204).send(""); return; }
+    if (req.method !== "POST") { res.status(405).json({ error: "Method not allowed" }); return; }
+
+    // Verify caller is authenticated
+    const authHeader = req.headers.authorization || "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+    if (!token) { res.status(401).json({ error: "Unauthorized" }); return; }
+    try { await admin.auth().verifyIdToken(token); } catch (e) {
+      res.status(401).json({ error: "Invalid token" }); return;
+    }
+
+    const { message } = req.body;
+    if (!message || !message.trim()) {
+      res.status(400).json({ error: "Message is required" }); return;
+    }
+
+    if (!twilioClient) {
+      res.status(500).json({ error: "Twilio not configured. Run: firebase functions:config:set twilio.account_sid twilio.auth_token twilio.from_number" });
+      return;
+    }
+
+    try {
+      const snap = await db.collection("subscribers")
+        .where("smsOptIn", "==", true)
+        .where("active", "==", true)
+        .get();
+
+      const recipients = snap.docs
+        .map(d => d.data())
+        .filter(s => s.phone && s.phone.trim());
+
+      let sent = 0, failed = 0;
+      const fromNumber = twilioConfig.from_number;
+
+      for (const sub of recipients) {
+        try {
+          await twilioClient.messages.create({
+            body: message.trim(),
+            from: fromNumber,
+            to: sub.phone.trim(),
+          });
+          sent++;
+        } catch (err) {
+          console.error(`SMS failed for ${sub.phone}:`, err.message);
+          failed++;
+        }
+      }
+
+      res.json({ sent, failed, total: recipients.length });
+    } catch (error) {
+      console.error("SMS blast error:", error);
+      res.status(500).json({ error: "Failed to send SMS blast" });
+    }
+  });
+});
+
+// ============================================
+// EMAIL BLAST
+// ============================================
+// Sends an email to all active subscribers via the Firestore mail collection
+// (Uses Firebase "Trigger Email" extension)
+exports.sendEmailBlast = functions.https.onRequest((req, res) => {
+  corsHandler(req, res, async () => {
+    if (req.method === "OPTIONS") { res.status(204).send(""); return; }
+    if (req.method !== "POST") { res.status(405).json({ error: "Method not allowed" }); return; }
+
+    // Verify caller is authenticated
+    const authHeader = req.headers.authorization || "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+    if (!token) { res.status(401).json({ error: "Unauthorized" }); return; }
+    try { await admin.auth().verifyIdToken(token); } catch (e) {
+      res.status(401).json({ error: "Invalid token" }); return;
+    }
+
+    const { subject, htmlBody } = req.body;
+    if (!subject || !htmlBody) {
+      res.status(400).json({ error: "Subject and body are required" }); return;
+    }
+
+    try {
+      const snap = await db.collection("subscribers")
+        .where("active", "==", true)
+        .get();
+
+      const recipients = snap.docs
+        .map(d => d.data())
+        .filter(s => s.email && s.email.trim());
+
+      let sent = 0;
+      for (const sub of recipients) {
+        await db.collection("mail").add({
+          to: sub.email.trim(),
+          message: {
+            subject: subject.trim(),
+            html: htmlBody,
+          },
+        });
+        sent++;
+      }
+
+      res.json({ sent, total: recipients.length });
+    } catch (error) {
+      console.error("Email blast error:", error);
+      res.status(500).json({ error: "Failed to send email blast" });
+    }
+  });
 });
