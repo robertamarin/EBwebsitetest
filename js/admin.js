@@ -5,7 +5,7 @@ import {
     db, auth, storage,
     collection, doc, getDoc, getDocs, addDoc, setDoc, updateDoc, deleteDoc,
     query, where, orderBy, limit, onSnapshot,
-    serverTimestamp, firestoreIncrement,
+    serverTimestamp, firestoreIncrement, writeBatch, Timestamp,
     signInWithEmailAndPassword, onAuthStateChanged, signOut,
     storageRef, uploadBytes, getDownloadURL, deleteObject, listAll, getMetadata
 } from './firebase-config.js';
@@ -1613,6 +1613,101 @@ window.exportSubscribers = function() {
     a.click();
     URL.revokeObjectURL(url);
     showToast('CSV exported', 'success');
+};
+
+window.importSubscribersCSV = async function(input) {
+    const file = input.files[0];
+    if (!file) return;
+    // Reset the input so the same file can be re-selected if needed
+    input.value = '';
+
+    const text = await file.text();
+    const lines = text.split(/\r?\n/).filter(l => l.trim());
+    if (lines.length < 2) {
+        showToast('CSV is empty or has no data rows', 'error');
+        return;
+    }
+
+    // Parse header row to find column indices (case-insensitive)
+    const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, '').trim().toLowerCase());
+    const nameIdx  = headers.findIndex(h => h === 'name');
+    const emailIdx = headers.findIndex(h => h === 'email');
+    const phoneIdx = headers.findIndex(h => h.includes('phone'));
+
+    if (emailIdx === -1) {
+        showToast('CSV must have an "Email" column', 'error');
+        return;
+    }
+
+    // Parse CSV rows into objects
+    function parseRow(line) {
+        const cols = [];
+        let cur = '', inQuote = false;
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"') { inQuote = !inQuote; }
+            else if (ch === ',' && !inQuote) { cols.push(cur.trim()); cur = ''; }
+            else { cur += ch; }
+        }
+        cols.push(cur.trim());
+        return cols;
+    }
+
+    const incoming = [];
+    for (let i = 1; i < lines.length; i++) {
+        const cols = parseRow(lines[i]);
+        const email = (cols[emailIdx] || '').toLowerCase().trim();
+        if (!email) continue;
+        incoming.push({
+            name:  nameIdx  !== -1 ? (cols[nameIdx]  || '').trim() : '',
+            email,
+            phone: phoneIdx !== -1 ? (cols[phoneIdx] || '').trim() : '',
+        });
+    }
+
+    if (incoming.length === 0) {
+        showToast('No valid rows found in CSV', 'error');
+        return;
+    }
+
+    // Load existing emails from Firestore to deduplicate
+    showToast('Checking for duplicates…', 'success');
+    const existingSnap = await getDocs(collection(db, 'subscribers'));
+    const existingEmails = new Set(existingSnap.docs.map(d => (d.data().email || '').toLowerCase().trim()));
+
+    const toAdd = incoming.filter(m => !existingEmails.has(m.email));
+    const skipped = incoming.length - toAdd.length;
+
+    if (toAdd.length === 0) {
+        showToast(`All ${skipped} member(s) already exist — nothing imported`, 'error');
+        return;
+    }
+
+    // Batch-write new members (Firestore limit: 500 per batch)
+    const BATCH_SIZE = 500;
+    const now = new Date();
+    for (let i = 0; i < toAdd.length; i += BATCH_SIZE) {
+        const batch = writeBatch(db);
+        toAdd.slice(i, i + BATCH_SIZE).forEach(m => {
+            const ref = doc(collection(db, 'subscribers'));
+            batch.set(ref, {
+                name:     m.name,
+                email:    m.email,
+                phone:    m.phone,
+                smsOptIn: false,
+                active:   true,
+                source:   'csv-import',
+                joinedAt: Timestamp.fromDate(now),
+            });
+        });
+        await batch.commit();
+    }
+
+    const msg = skipped > 0
+        ? `Imported ${toAdd.length} member(s). Skipped ${skipped} duplicate(s).`
+        : `Imported ${toAdd.length} member(s).`;
+    showToast(msg, 'success');
+    loadSubscribers();
 };
 
 // ============================================

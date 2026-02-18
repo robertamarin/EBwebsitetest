@@ -133,7 +133,9 @@
             <div class="admin-section" id="sectionCommunity" style="display:none;">
                 <div class="admin-section-header">
                     <h2>Community</h2>
-                    <div>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <input type="file" id="csvImportInput" accept=".csv" style="display:none;" onchange="importSubscribersCSV(this)">
+                        <button class="btn-admin-secondary" onclick="document.getElementById('csvImportInput').click()">Import CSV</button>
                         <button class="btn-admin-secondary" onclick="exportSubscribers()">Export CSV</button>
                     </div>
                 </div>
