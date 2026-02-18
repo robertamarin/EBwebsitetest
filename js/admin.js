@@ -758,7 +758,7 @@ let allAdminGallery = [];
 
 async function loadGalleryItems() {
     try {
-        const snapshot = await getDocs(query(collection(db, 'gallery'), orderBy('createdAt', 'desc')));
+        const snapshot = await getDocs(query(collection(db, 'gallery'), orderBy('sortOrder', 'desc')));
         allAdminGallery = [];
         snapshot.forEach(d => allAdminGallery.push({ id: d.id, ...d.data() }));
 
