@@ -1864,6 +1864,13 @@ async function loadSettings() {
             document.getElementById('settingColorTerracotta').value = data.themeTerracotta || '#c4907a';
             document.getElementById('settingColorSageDark').value = data.themeSageDark || '#7a9167';
             document.getElementById('settingColorCream').value = data.themeCream || '#f7f4f0';
+
+            // About image preview
+            const aboutPreview = document.getElementById('aboutImagePreview');
+            if (aboutPreview && data.aboutImageUrl) {
+                aboutPreview.src = data.aboutImageUrl;
+                aboutPreview.style.display = 'block';
+            }
         }
     } catch (error) {
         console.error('Error loading settings:', error);
@@ -1895,6 +1902,27 @@ window.saveSettings = async function(e) {
     const themeSageDark = document.getElementById('settingColorSageDark').value;
     const themeCream = document.getElementById('settingColorCream').value;
 
+    // Handle about image upload
+    const aboutImageInput = document.getElementById('settingAboutImage');
+    let aboutImageUrl = null;
+    if (aboutImageInput && aboutImageInput.files.length > 0) {
+        const file = aboutImageInput.files[0];
+        const error = validateFile(file);
+        if (error) {
+            showToast(error, 'error');
+            return;
+        }
+        try {
+            const blob = await compressImage(file);
+            const safeName = file.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
+            aboutImageUrl = await uploadImageToStorage(blob, `images/settings/about_${Date.now()}_${safeName}`);
+        } catch (uploadErr) {
+            console.error('About image upload failed:', uploadErr);
+            showToast('Failed to upload about image', 'error');
+            return;
+        }
+    }
+
     try {
         const settingsRef = doc(db, 'settings', 'store');
         const data = {
@@ -1922,7 +1950,22 @@ window.saveSettings = async function(e) {
             updatedAt: serverTimestamp()
         };
 
+        // Only update aboutImageUrl if a new image was uploaded
+        if (aboutImageUrl) {
+            data.aboutImageUrl = aboutImageUrl;
+        }
+
         await setDoc(settingsRef, data, { merge: true });
+
+        // Update preview if new image was uploaded
+        if (aboutImageUrl) {
+            const aboutPreview = document.getElementById('aboutImagePreview');
+            if (aboutPreview) {
+                aboutPreview.src = aboutImageUrl;
+                aboutPreview.style.display = 'block';
+            }
+            document.getElementById('settingAboutImage').value = '';
+        }
 
         showToast('Settings saved', 'success');
     } catch (error) {

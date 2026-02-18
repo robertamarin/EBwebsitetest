@@ -2,7 +2,7 @@
 // ETHEREAL BALANCE - PARTNERS MODULE
 // Loads partners dynamically from Firestore
 // ============================================
-import { db, collection, getDocs, query, orderBy } from './firebase-config.js';
+import { db, collection, getDocs, query, where } from './firebase-config.js';
 
 async function loadPartners() {
     const track = document.getElementById('partnersTrack');
@@ -12,7 +12,7 @@ async function loadPartners() {
     try {
         const q = query(
             collection(db, 'partners'),
-            orderBy('order', 'asc')
+            where('isActive', '==', true)
         );
 
         const snapshot = await getDocs(q);
@@ -22,11 +22,14 @@ async function loadPartners() {
             const data = doc.data();
             const normalizedName = typeof data.name === 'string' ? data.name.trim().toLowerCase() : '';
 
-            if (data.isActive !== false && normalizedName && !seenPartnerNames.has(normalizedName)) {
+            if (normalizedName && !seenPartnerNames.has(normalizedName)) {
                 seenPartnerNames.add(normalizedName);
                 partners.push({ id: doc.id, ...data });
             }
         });
+
+        // Sort client-side to avoid needing a composite Firestore index
+        partners.sort((a, b) => (a.order || 0) - (b.order || 0));
 
         if (partners.length === 0) return;
 

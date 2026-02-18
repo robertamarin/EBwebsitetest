@@ -3898,7 +3898,7 @@
             <div class="about-grid">
                 <div class="about-image reveal-left">
                     <div class="about-image-main">
-                        <img class="about-image-photo" src="assets/JazMeg.jpg" alt="Jazmin Sabah and Megan Pappa">
+                        <img id="aboutImage" class="about-image-photo" src="assets/JazMeg.jpg" alt="Jazmin Sabah and Megan Pappa">
                     </div>
                     <div class="about-image-accent">
                         <span>Est.</span>
@@ -4207,6 +4207,10 @@
                         const heading = document.getElementById('heroHeading');
                         if (heading) heading.innerHTML = d.heroHeading;
                     }
+                    if (d.aboutImageUrl) {
+                        const aboutImg = document.getElementById('aboutImage');
+                        if (aboutImg) aboutImg.src = d.aboutImageUrl;
+                    }
                     if (d.aboutHeading) {
                         const heading = document.getElementById('aboutHeading');
                         if (heading) heading.innerHTML = d.aboutHeading;
@@ -4300,7 +4304,10 @@
             }
 
             try {
-                const partnersSnap = await getDocs(collection(db, 'partners'));
+                const partnersSnap = await getDocs(query(
+                    collection(db, 'partners'),
+                    where('isActive', '==', true)
+                ));
                 const seenPartnerNames = new Set();
                 window._firestorePartners = partnersSnap.docs
                     .map(doc => doc.data())
