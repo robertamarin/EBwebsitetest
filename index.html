@@ -1093,6 +1093,146 @@
             color: var(--sage-light);
         }
 
+        /* Instructors Section */
+        .instructors {
+            padding: 140px 0;
+            background: var(--cream);
+        }
+
+        .instructors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 36px;
+            margin-top: 64px;
+        }
+
+        .instructor-card {
+            background: var(--warm-white);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 18px 50px rgba(45, 45, 45, 0.07);
+            opacity: 0;
+            transition: opacity 0.7s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .instructor-card.revealed {
+            opacity: 1;
+        }
+
+        .instructor-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 28px 60px rgba(45, 45, 45, 0.13);
+        }
+
+        .instructor-photo {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4 / 5;
+            overflow: hidden;
+            background: var(--sand);
+        }
+
+        .instructor-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .instructor-card:hover .instructor-photo img {
+            transform: scale(1.05);
+        }
+
+        .instructor-photo-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 3.5rem;
+            color: var(--sage-dark);
+            background: linear-gradient(135deg, var(--sage-light), var(--sand));
+        }
+
+        .instructor-info {
+            padding: 28px 26px 30px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .instructor-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.6rem;
+            font-weight: 500;
+            color: var(--charcoal);
+            margin-bottom: 4px;
+            line-height: 1.2;
+        }
+
+        .instructor-title {
+            font-size: 0.82rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--terracotta);
+            margin-bottom: 16px;
+        }
+
+        .instructor-bio {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: var(--charcoal-light);
+            margin-bottom: 18px;
+        }
+
+        .instructor-specialties {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: auto;
+        }
+
+        .instructor-tag {
+            font-size: 0.74rem;
+            letter-spacing: 0.04em;
+            padding: 6px 13px;
+            border-radius: 999px;
+            background: var(--cream);
+            color: var(--sage-dark);
+            border: 1px solid var(--sand);
+        }
+
+        .instructor-social {
+            margin-top: 18px;
+        }
+
+        .instructor-social a {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.82rem;
+            color: var(--stone);
+            transition: color 0.3s ease;
+        }
+
+        .instructor-social a:hover {
+            color: var(--terracotta);
+        }
+
+        @media (max-width: 600px) {
+            .instructors {
+                padding: 90px 0;
+            }
+            .instructors-grid {
+                grid-template-columns: 1fr;
+                gap: 28px;
+                margin-top: 44px;
+            }
+        }
+
         /* About Section */
         .about {
             padding: 140px 0;
@@ -3575,6 +3715,7 @@
             <li><a href="#events">Events</a></li>
             <li><a href="#gallery">Gallery</a></li>
             <li><a href="#partners">Partners</a></li>
+            <li><a href="#instructors">Instructors</a></li>
             <li><a href="#about">About</a></li>
             <li><a href="#shop">Shop</a></li>
             <li><a href="#contact">Contact</a></li>
@@ -3603,6 +3744,7 @@
             <li><a href="#events" onclick="toggleMobileMenu()">Events</a></li>
             <li><a href="#gallery" onclick="toggleMobileMenu()">Gallery</a></li>
             <li><a href="#partners" onclick="toggleMobileMenu()">Partners</a></li>
+            <li><a href="#instructors" onclick="toggleMobileMenu()">Instructors</a></li>
             <li><a href="#about" onclick="toggleMobileMenu()">About</a></li>
             <li><a href="#shop" onclick="toggleMobileMenu()">Shop</a></li>
             <li><a href="#contact" onclick="toggleMobileMenu()">Contact</a></li>
@@ -3948,6 +4090,22 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Instructors Section -->
+    <section class="instructors" id="instructors">
+        <div class="container">
+            <div class="section-header reveal">
+                <div class="section-eyebrow">The People</div>
+                <h2 class="section-title">Meet Our Instructors</h2>
+                <p class="section-subtitle">
+                    A growing collective of passionate teachers guiding our community toward balance, strength, and ease.
+                </p>
+            </div>
+            <div class="instructors-grid" id="instructorsGrid">
+                <!-- Instructors loaded dynamically from Firestore -->
             </div>
         </div>
     </section>
@@ -5069,6 +5227,7 @@
 
     <!-- Shop Scripts (ES Modules) -->
     <script type="module" src="js/partners.js"></script>
+    <script type="module" src="js/instructors.js"></script>
     <script type="module" src="js/cart.js"></script>
     <script type="module" src="js/shop.js"></script>
     <script type="module" src="js/checkout.js"></script>

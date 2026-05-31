@@ -354,6 +354,7 @@ function initAllUploadZones() {
     initUploadZone('eventImageZone', 'eventImageInput', 'eventImagePreview', false);
     initUploadZone('galleryCoverZone', 'galleryCoverInput', 'galleryCoverPreview', false);
     initUploadZone('galleryPhotosZone', 'galleryPhotosInput', 'galleryPhotosList', true);
+    initUploadZone('instructorImageZone', 'instructorImageInput', 'instructorImagePreview', false);
 }
 
 // ============================================
@@ -376,6 +377,7 @@ window.switchAdminSection = function(section) {
         case 'products': loadProducts(); break;
         case 'events': loadEvents(); break;
         case 'gallery': loadGalleryItems(); break;
+        case 'instructors': loadInstructors(); break;
         case 'community': loadSubscribers(); break;
         case 'orders': loadOrders(); break;
         case 'partners': loadPartners(); break;
@@ -1477,6 +1479,159 @@ window.seedPartners = async function() {
     } catch (error) {
         console.error('Error seeding partners:', error);
         showToast('Error seeding partners. Check console for details.', 'error');
+    }
+};
+
+// ============================================
+// INSTRUCTORS MANAGEMENT
+// ============================================
+let allAdminInstructors = [];
+
+async function loadInstructors() {
+    try {
+        let snapshot;
+        try {
+            snapshot = await getDocs(query(collection(db, 'instructors'), orderBy('order', 'asc')));
+        } catch (queryError) {
+            console.warn('Falling back to non-ordered instructor query:', queryError);
+            snapshot = await getDocs(collection(db, 'instructors'));
+        }
+
+        allAdminInstructors = [];
+        snapshot.forEach(d => allAdminInstructors.push({ id: d.id, ...d.data() }));
+
+        const container = document.getElementById('adminInstructorsGrid');
+        if (allAdminInstructors.length === 0) {
+            container.innerHTML = '<div class="admin-empty-state"><p>No instructors yet. Click "+ Add Instructor" to add one.</p></div>';
+            return;
+        }
+
+        container.innerHTML = allAdminInstructors.map(inst => `
+            <div class="admin-event-card">
+                ${inst.photoUrl ? `<img class="admin-event-card-cover" src="${escapeAttr(inst.photoUrl)}" alt="">` : '<div class="admin-event-card-cover"></div>'}
+                <div class="admin-event-card-body">
+                    <h4>${escapeHtml(inst.name)}</h4>
+                    <div class="event-meta-text">
+                        ${escapeHtml(inst.title || '')}
+                    </div>
+                    <span class="status-badge ${inst.isActive !== false ? 'active' : 'inactive'}">${inst.isActive !== false ? 'Active' : 'Inactive'}</span>
+                </div>
+                <div class="admin-event-card-actions">
+                    <button onclick="editInstructor('${inst.id}')">Edit</button>
+                    <button class="delete" onclick="deleteInstructor('${inst.id}','${escapeAttr(inst.name)}')">Delete</button>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading instructors:', error);
+        document.getElementById('adminInstructorsGrid').innerHTML = '<p style="padding: 40px; text-align: center; color: var(--red);">Error loading instructors. Check console for details.</p>';
+    }
+}
+
+window.openInstructorEditor = function(instructorId) {
+    const modal = document.getElementById('instructorEditorModal');
+    const title = document.getElementById('instructorEditorTitle');
+    const form = document.getElementById('instructorEditorForm');
+    const preview = document.getElementById('instructorImagePreview');
+
+    form.reset();
+    document.getElementById('instructorEditId').value = '';
+    document.getElementById('instructorOrder').value = allAdminInstructors.length;
+    document.getElementById('instructorActive').checked = true;
+    pendingUploads['instructorImageZone'] = [];
+    preview.dataset.existingUrls = '[]';
+    preview.innerHTML = '';
+
+    if (instructorId) {
+        title.textContent = 'Edit Instructor';
+        const inst = allAdminInstructors.find(i => i.id === instructorId);
+        if (inst) {
+            document.getElementById('instructorEditId').value = inst.id;
+            document.getElementById('instructorName').value = inst.name || '';
+            document.getElementById('instructorTitle').value = inst.title || '';
+            document.getElementById('instructorBio').value = inst.bio || '';
+            document.getElementById('instructorSpecialties').value = (inst.specialties || []).join(', ');
+            document.getElementById('instructorInstagram').value = inst.instagram || '';
+            document.getElementById('instructorOrder').value = inst.order ?? 0;
+            document.getElementById('instructorActive').checked = inst.isActive !== false;
+
+            if (inst.photoUrl) {
+                preview.dataset.existingUrls = JSON.stringify([inst.photoUrl]);
+                renderPreviews('instructorImageZone', 'instructorImagePreview', false);
+            }
+        }
+    } else {
+        title.textContent = 'Add Instructor';
+    }
+
+    modal.style.display = 'flex';
+};
+
+window.closeInstructorEditor = function() {
+    document.getElementById('instructorEditorModal').style.display = 'none';
+};
+
+window.editInstructor = function(instructorId) {
+    window.openInstructorEditor(instructorId);
+};
+
+window.saveInstructor = async function(e) {
+    e.preventDefault();
+    showToast('Saving instructor...', 'success');
+
+    try {
+        const editId = document.getElementById('instructorEditId').value;
+
+        // Upload photo if a new one is pending
+        const newUrls = await uploadAllPending('instructorImageZone', 'images/instructors');
+        const preview = document.getElementById('instructorImagePreview');
+        const existingUrls = preview.dataset.existingUrls ? JSON.parse(preview.dataset.existingUrls) : [];
+        const photoUrl = newUrls[0] || existingUrls[0] || '';
+
+        const specialties = document.getElementById('instructorSpecialties').value
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean);
+
+        const instructorData = {
+            name: document.getElementById('instructorName').value.trim(),
+            title: document.getElementById('instructorTitle').value.trim(),
+            bio: document.getElementById('instructorBio').value.trim(),
+            specialties,
+            instagram: document.getElementById('instructorInstagram').value.trim() || null,
+            photoUrl,
+            order: parseInt(document.getElementById('instructorOrder').value) || 0,
+            isActive: document.getElementById('instructorActive').checked,
+            updatedAt: serverTimestamp()
+        };
+
+        if (editId) {
+            await updateDoc(doc(db, 'instructors', editId), instructorData);
+            showToast('Instructor updated', 'success');
+        } else {
+            instructorData.createdAt = serverTimestamp();
+            await addDoc(collection(db, 'instructors'), instructorData);
+            showToast('Instructor created', 'success');
+        }
+
+        closeInstructorEditor();
+        loadInstructors();
+    } catch (error) {
+        console.error('Error saving instructor:', error);
+        showToast('Error saving instructor: ' + error.message, 'error');
+    }
+};
+
+window.deleteInstructor = async function(instructorId, instructorName) {
+    if (!confirm(`Delete instructor "${instructorName}"? This cannot be undone.`)) return;
+
+    try {
+        await deleteDoc(doc(db, 'instructors', instructorId));
+        showToast('Instructor deleted', 'success');
+        loadInstructors();
+    } catch (error) {
+        console.error('Error deleting instructor:', error);
+        showToast('Error deleting instructor', 'error');
     }
 };
 

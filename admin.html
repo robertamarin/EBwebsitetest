@@ -62,6 +62,10 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6"/><path d="M23 11h-6"/></svg>
                     Partners
                 </button>
+                <button class="admin-nav-item" data-section="instructors" onclick="switchAdminSection('instructors')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Instructors
+                </button>
                 <button class="admin-nav-item" data-section="community" onclick="switchAdminSection('community')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
                     Community
@@ -192,6 +196,17 @@
                     </div>
                 </div>
                 <div class="admin-table-container" id="adminPartnersTable">
+                    <p style="padding: 40px; text-align: center; color: var(--stone);">Loading...</p>
+                </div>
+            </div>
+
+            <!-- INSTRUCTORS SECTION -->
+            <div class="admin-section" id="sectionInstructors" style="display:none;">
+                <div class="admin-section-header">
+                    <h2>Instructors</h2>
+                    <button class="btn-admin-primary" onclick="openInstructorEditor()">+ Add Instructor</button>
+                </div>
+                <div class="admin-event-cards" id="adminInstructorsGrid">
                     <p style="padding: 40px; text-align: center; color: var(--stone);">Loading...</p>
                 </div>
             </div>
@@ -630,6 +645,74 @@
                 <div class="admin-form-actions">
                     <button type="button" class="btn-admin-secondary" onclick="closePartnerEditor()">Cancel</button>
                     <button type="submit" class="btn-admin-primary">Save Partner</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Instructor Editor Modal -->
+    <div class="admin-modal-overlay" id="instructorEditorModal" style="display:none;">
+        <div class="admin-modal">
+            <button class="admin-modal-close" onclick="closeInstructorEditor()">&times;</button>
+            <h2 id="instructorEditorTitle">Add Instructor</h2>
+            <form id="instructorEditorForm" onsubmit="saveInstructor(event)">
+                <input type="hidden" id="instructorEditId" value="">
+
+                <div class="admin-form-group">
+                    <label>Photo</label>
+                    <div class="image-upload-zone" id="instructorImageZone">
+                        <input type="file" id="instructorImageInput" accept="image/jpeg,image/png,image/webp" hidden>
+                        <span class="upload-icon">+</span>
+                        <div class="upload-text">
+                            Drag & drop or <strong>click to browse</strong>
+                        </div>
+                        <div class="upload-limits">Max 10MB. JPG, PNG, WebP. Auto-compressed.</div>
+                    </div>
+                    <div class="image-preview-grid" id="instructorImagePreview"></div>
+                </div>
+
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label>Name</label>
+                        <input type="text" id="instructorName" required placeholder="e.g., Jazmin Sabah">
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Title / Role</label>
+                        <input type="text" id="instructorTitle" placeholder="e.g., Pilates &amp; Barre Instructor">
+                    </div>
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Bio</label>
+                    <textarea id="instructorBio" placeholder="A short bio about this instructor..."></textarea>
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Specialties (optional, comma-separated)</label>
+                    <input type="text" id="instructorSpecialties" placeholder="e.g., Reformer, Prenatal, Breathwork">
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Instagram URL (optional)</label>
+                    <input type="url" id="instructorInstagram" placeholder="https://instagram.com/...">
+                </div>
+
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label>Display Order</label>
+                        <input type="number" id="instructorOrder" min="0" value="0" placeholder="0">
+                    </div>
+                    <div class="admin-form-group" style="display:flex; align-items:flex-end; padding-bottom: 20px;">
+                        <div class="admin-form-check" style="margin-bottom:0;">
+                            <input type="checkbox" id="instructorActive" checked>
+                            <label for="instructorActive">Active (visible on site)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-form-actions">
+                    <button type="button" class="btn-admin-secondary" onclick="closeInstructorEditor()">Cancel</button>
+                    <button type="submit" class="btn-admin-primary">Save Instructor</button>
                 </div>
             </form>
         </div>
