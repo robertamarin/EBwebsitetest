@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Events & Gatherings — Ethereal Balance</title>
+<meta name="description" content="Upcoming Pilates gatherings and a look back at past wellness events with Ethereal Balance.">
+<link rel="icon" href="assets/EBSmall.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site.css">
+</head>
+<body data-screen-label="Events">
+
+<nav class="nav is-solid" id="nav">
+  <a href="index.html" class="nav__wordmark">ethereal balance</a>
+  <ul class="nav__links">
+    <li><a href="experiences.html">Experiences</a></li>
+    <li><a href="partnerships.html">Partnerships</a></li>
+    <li><a href="events.html">Events</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="shop.html">Shop</a></li>
+    <li><a href="contact.html" class="nav__cta">Plan an event</a></li>
+  </ul>
+  <div class="nav__right">
+    <a href="shop.html" class="nav__cart" aria-label="Shopping bag"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></a>
+    <div class="nav__burger" id="burger"><span></span><span></span><span></span></div>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <div class="mobile-menu__top"><span class="nav__wordmark">ethereal balance</span><button class="mobile-menu__close">&times;</button></div>
+  <a href="experiences.html">Experiences</a><a href="partnerships.html">Partnerships</a><a href="events.html">Events</a><a href="about.html">About</a><a href="shop.html">Shop</a><a href="contact.html">Plan an event</a>
+</div>
+
+<!-- PAGE HERO -->
+<header class="page-hero">
+  <div class="container">
+    <span class="eyebrow eyebrow--rule">Join Us</span>
+    <h1>Events &amp; <em>gatherings</em></h1>
+    <p class="lede">Reserve your place at an upcoming flow, or wander through moments from gatherings past — in gardens, studios, hotels, and hidden corners of Southern California.</p>
+  </div>
+</header>
+
+<!-- UPCOMING -->
+<section class="section--tight">
+  <div class="container">
+    <div class="section-head reveal" style="margin-bottom:8px;">
+      <h2 class="h2">Upcoming</h2>
+    </div>
+    <div class="ev-list" id="eventsList"></div>
+    <div class="ev-empty hide reveal" id="eventsEmpty">
+      <svg viewBox="0 0 24 24"><path d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14z"/><path d="M5 19c3-3 6-5 10-7"/></svg>
+      <h3>Taking a mindful pause</h3>
+      <p>We're crafting our next experiences. Join the community to be the first to know when new gatherings bloom.</p>
+      <a href="#community" class="btn btn-ghost">Join the community</a>
+    </div>
+  </div>
+</section>
+
+<!-- PAST GALLERY -->
+<section class="section bg-paper2">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow eyebrow--rule">Our Story in Motion</span>
+      <h2 class="h2" style="margin-top:22px;">Past gatherings</h2>
+      <p class="lede">Moments of connection and movement from our community, corporate, and hotel experiences.</p>
+    </div>
+    <div class="gallery" id="galleryGrid"></div>
+  </div>
+</section>
+
+<!-- LIGHTBOX -->
+<div class="lb" id="lightbox" role="dialog" aria-modal="true">
+  <div class="lb__head">
+    <div><h3 id="lbTitle">Event</h3><p id="lbDate"></p></div>
+    <button class="lb__close" id="lbClose" aria-label="Close">&times;</button>
+  </div>
+  <div class="lb__stage">
+    <button class="lb__nav" id="lbPrev" aria-label="Previous">&#8592;</button>
+    <div id="lbStage" style="display:flex;align-items:center;justify-content:center;"></div>
+    <button class="lb__nav" id="lbNext" aria-label="Next">&#8594;</button>
+  </div>
+  <div class="lb__count" id="lbCount">1 / 1</div>
+</div>
+
+<!-- COMMUNITY -->
+<section class="section bg-forest" id="community">
+  <div class="container">
+    <div class="community-inner reveal">
+      <span class="eyebrow eyebrow--rule eyebrow--center">Stay Connected</span>
+      <h2 class="serif">Join the <em>community</em></h2>
+      <p>Be the first to hear about upcoming events, exclusive workshops, and quiet moments of wellness inspiration.</p>
+      <div id="communityFormWrapper">
+        <form id="communitySignupForm" class="community-form" novalidate>
+          <div class="row2">
+            <input type="text" id="communityName" placeholder="Your name" required>
+            <input type="email" id="communityEmail" placeholder="Email address" required>
+          </div>
+          <input type="tel" id="communityPhone" placeholder="Phone (optional, for text updates)">
+          <label class="community-optin"><input type="checkbox" id="communitySmsOptIn"> I'd like to receive text updates about events</label>
+          <button type="submit" class="btn" id="communitySubmitBtn">Join the community</button>
+        </form>
+      </div>
+      <div class="community-success" id="communitySuccess">
+        <svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
+        <h3>Welcome to the community</h3>
+        <p>You're in. We'll keep you close to everything Ethereal Balance.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div class="footer__brand">
+        <span class="nav__wordmark">ethereal balance</span>
+        <p>Mindful movement and community connection — premium Pilates experiences across Southern California.</p>
+        <div class="footer__social">
+          <a href="https://www.instagram.com/ethereal_balancee/?hl=en" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 3.25.15 4.77 1.69 4.92 4.92.06 1.27.07 1.64.07 4.85s-.01 3.58-.07 4.85c-.15 3.23-1.66 4.77-4.92 4.92-1.27.06-1.64.07-4.85.07s-3.58-.01-4.85-.07c-3.26-.15-4.77-1.7-4.92-4.92-.06-1.27-.07-1.64-.07-4.85s.01-3.58.07-4.85c.15-3.23 1.66-4.77 4.92-4.92C8.42 2.17 8.8 2.16 12 2.16M12 0C8.74 0 8.33.01 7.05.07 2.7.27.28 2.69.08 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.2 4.36 2.62 6.78 6.98 6.98C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c4.35-.2 6.78-2.62 6.98-6.98.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.2-4.35-2.62-6.78-6.98-6.98C15.67.01 15.26 0 12 0zm0 5.84a6.16 6.16 0 1 0 0 12.32 6.16 6.16 0 0 0 0-12.32zm0 10.16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.41-11.85a1.44 1.44 0 1 0 0 2.88 1.44 1.44 0 0 0 0-2.88z"/></svg></a>
+          <a href="https://www.tiktok.com/@etherealbalancee" target="_blank" rel="noopener" aria-label="TikTok"><svg viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.27 0 .54.04.79.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg></a>
+          <a href="mailto:etherealbalancee@gmail.com" aria-label="Email"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg></a>
+        </div>
+      </div>
+      <div class="footer__col"><h4>Experiences</h4><ul><li><a href="partnerships.html">Corporate</a></li><li><a href="partnerships.html#hotels">Hotels</a></li><li><a href="private.html">Private</a></li><li><a href="events.html">Community</a></li><li><a href="experiences.html">Retreats</a></li></ul></div>
+      <div class="footer__col"><h4>Company</h4><ul><li><a href="about.html">About</a></li><li><a href="events.html">Events</a></li><li><a href="shop.html">Shop</a></li><li><a href="partnerships.html">Partnerships</a></li><li><a href="contact.html">Contact</a></li></ul></div>
+      <div class="footer__col"><h4>Visit</h4><ul><li>San Diego, California</li><li>Serving Southern California</li><li><a href="mailto:etherealbalancee@gmail.com">etherealbalancee@gmail.com</a></li><li><a href="https://www.instagram.com/ethereal_balancee/?hl=en" target="_blank" rel="noopener">@ethereal_balancee</a></li></ul></div>
+    </div>
+    <div class="footer__bottom"><p>© <span data-year>2026</span> Ethereal Balance. All rights reserved.</p><p>Privacy · Terms · <a href="admin.html">Admin</a></p></div>
+  </div>
+</footer>
+
+<button class="back-to-top" aria-label="Back to top"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+
+<script src="events.js"></script>
+<script src="js/site.js"></script>
+<script type="module" src="js/eb-firebase.js"></script>
+</body>
+</html>

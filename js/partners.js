@@ -33,14 +33,17 @@ async function loadPartners() {
 
         if (partners.length === 0) return;
 
-        // Build marquee track (duplicate for infinite scroll animation)
+        // Build marquee track (duplicate for infinite scroll animation).
+        // Uses the redesign's .marquee__item markup so it matches site.css.
         if (track) {
-            const logos = partners.map(p => {
-                const text = document.createElement('div');
-                text.textContent = p.name;
-                return `<div class="partner-logo">${text.textContent}</div>`;
+            const items = partners.map(p => {
+                const span = document.createElement('span');
+                span.className = 'marquee__item';
+                span.textContent = p.name;
+                return span.outerHTML;
             }).join('');
-            track.innerHTML = logos + logos; // Duplicated for seamless loop
+            track.innerHTML = items + items; // Duplicated for seamless loop
+            track.dataset.cloned = '1';      // stop site.js initMarquee from cloning again
         }
 
 
