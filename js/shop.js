@@ -26,28 +26,29 @@ async function isStoreEnabled() {
  * Completely hides the shop from the website — removes section, nav links, and cart.
  */
 function hideStoreCompletely() {
-    // Hide the shop section
-    const shopSection = document.getElementById('shop');
-    if (shopSection) shopSection.style.display = 'none';
-
-    // Hide all nav links pointing to #shop
-    document.querySelectorAll('a[href="#shop"]').forEach(link => {
+    // Hide every store entry point: nav Shop link, mobile menu link, footer link
+    // (multi-page design) and any legacy single-page #shop links.
+    document.querySelectorAll('a[href="shop.html"], a[href="#shop"]').forEach(link => {
         const li = link.closest('li');
-        if (li) li.style.display = 'none';
-        else link.style.display = 'none';
+        (li || link).style.display = 'none';
     });
 
-    // Hide the cart button
-    const cartBtn = document.getElementById('navCartBtn');
-    if (cartBtn) cartBtn.style.display = 'none';
+    // Hide the cart button/icon (button on shop.html, anchor elsewhere)
+    document.querySelectorAll('.nav__cart, #navCartBtn').forEach(el => el.style.display = 'none');
 
-    // Hide cart drawer if it exists
+    // Hide cart drawer + overlay if present
     const cartDrawer = document.getElementById('cartDrawer');
     if (cartDrawer) cartDrawer.style.display = 'none';
+    const cartOverlay = document.getElementById('cartDrawerOverlay');
+    if (cartOverlay) cartOverlay.style.display = 'none';
 
-    // Hide checkout success banner
+    // On the dedicated shop page, swap the product grid for an unavailable notice
     const shopLoading = document.getElementById('shopLoading');
     if (shopLoading) shopLoading.style.display = 'none';
+    const grid = document.getElementById('shopGrid');
+    if (grid) {
+        grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--ink-soft);padding:48px 0;">The shop is currently unavailable. Please check back soon.</p>';
+    }
 }
 
 // ============================================

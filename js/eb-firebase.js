@@ -4,7 +4,7 @@
 // partners they override the static data in events.js. Falls back silently.
 // ============================================================
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
-import { getFirestore, collection, getDocs, addDoc, query, where, Timestamp }
+import { getFirestore, collection, getDocs, addDoc, query, where, Timestamp, doc, getDoc }
   from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -49,6 +49,23 @@ window._firestoreReady = (async () => {
   if(typeof window.renderEvents==='function') window.renderEvents();
   if(typeof window.renderGalleryFromData==='function') window.renderGalleryFromData();
   return true;
+})();
+
+// ---- store visibility ----
+// If the admin "store enabled" toggle is off, remove every store entry point
+// (nav Shop link, mobile menu link, footer link, and the cart icon) site-wide.
+(async () => {
+  if(!db) return;
+  try {
+    const snap = await getDoc(doc(db,'settings','store'));
+    const enabled = !snap.exists() || snap.data().storeEnabled !== false;
+    if(enabled) return;
+    document.querySelectorAll('a[href="shop.html"]').forEach(a=>{
+      const li = a.closest('li');
+      (li || a).style.display = 'none';
+    });
+    document.querySelectorAll('.nav__cart').forEach(el=> el.style.display='none');
+  } catch(e){ console.log('Store settings skipped:', e.message); }
 })();
 
 // ---- community signup ----
