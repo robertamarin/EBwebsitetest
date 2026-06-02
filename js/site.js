@@ -68,8 +68,17 @@
     if(!isNaN(d)) return {mon:MON[d.getMonth()], day:String(d.getDate()).padStart(2,'0'), yr:d.getFullYear()};
     return {mon:'', day:'', yr:''};
   }
+  function eventDate(ev){
+    const d = new Date(ev.date || ev._sortDate || '');
+    return isNaN(d) ? null : d;
+  }
   function getUpcoming(){
-    return (window._firestoreEvents && window._firestoreEvents.length) ? window._firestoreEvents : (window.eventsData || []);
+    const src = (window._firestoreEvents && window._firestoreEvents.length) ? window._firestoreEvents : (window.eventsData || []);
+    const today = new Date(); today.setHours(0,0,0,0);
+    // Hide events whose date has already passed; keep undated entries.
+    return src
+      .filter(ev=>{ const d = eventDate(ev); return !d || d >= today; })
+      .sort((a,b)=>{ const da = eventDate(a), db = eventDate(b); if(!da||!db) return 0; return da - db; });
   }
   function eventCard(ev){
     const d = parseDate(ev.date || ev._sortDate || '');
