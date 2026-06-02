@@ -41,6 +41,31 @@
     $$('.mobile-menu a', menu).forEach(a => a.addEventListener('click', ()=> toggle(false)));
   }
 
+  /* ---------- stat counters: count up on scroll ---------- */
+  function animateCount(el){
+    const m = (el.textContent || '').trim().match(/^(\d[\d,]*)(.*)$/);
+    if(!m) return;
+    const target = parseInt(m[1].replace(/,/g,''), 10);
+    const suffix = m[2] || '';
+    if(isNaN(target)) return;
+    const dur = 1300, t0 = performance.now();
+    const ease = t => 1 - Math.pow(1 - t, 3);
+    (function tick(now){
+      const p = Math.min(1, (now - t0)/dur);
+      el.textContent = Math.round(ease(p) * target).toLocaleString() + suffix;
+      if(p < 1) requestAnimationFrame(tick);
+    })(t0);
+  }
+  function initStatCounters(){
+    const els = $$('.stat__num');
+    if(!els.length) return;
+    if(!('IntersectionObserver' in window)){ els.forEach(animateCount); return; }
+    const io = new IntersectionObserver((entries)=>{
+      entries.forEach(e=>{ if(e.isIntersecting){ animateCount(e.target); io.unobserve(e.target); } });
+    }, {threshold:0.6});
+    els.forEach(e=> io.observe(e));
+  }
+
   /* ---------- reveal on scroll ---------- */
   function initReveal(){
     const els = $$('.reveal');
@@ -69,7 +94,9 @@
     return {mon:'', day:'', yr:''};
   }
   function eventDate(ev){
-    const d = new Date(ev.date || ev._sortDate || '');
+    // Prefer the sortable ISO date (Firestore stores it in _sortDate) so events
+    // still filter correctly even when the display string isn't parseable.
+    const d = new Date(ev._sortDate || ev.date || '');
     return isNaN(d) ? null : d;
   }
   function getUpcoming(){
@@ -143,6 +170,8 @@
     LB.i = 0; LB.title = g.title || ''; LB.date = g.date || '';
     $('#lbTitle').textContent = LB.title;
     $('#lbDate').textContent = LB.date;
+    const descEl = $('#lbDesc');
+    if(descEl){ descEl.textContent = g.description || ''; descEl.style.display = g.description ? '' : 'none'; }
     paintLightbox();
     lb.classList.add('is-open'); document.body.style.overflow='hidden';
   }
@@ -179,7 +208,7 @@
 
   /* ---------- boot ---------- */
   function boot(){
-    initNav(); initMobileMenu(); initReveal(); initMarquee();
+    initNav(); initMobileMenu(); initReveal(); initMarquee(); initStatCounters();
     renderUpcoming(); renderGallery(); initLightboxControls(); initYear();
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot);

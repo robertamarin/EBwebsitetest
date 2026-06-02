@@ -34,10 +34,13 @@ window.eventsData = [
   }
 ]
 
+// Tip: add a `description` to any past event for a richer write-up in the gallery
+// lightbox. Keep it a sentence or two — it shows under the title when opened.
 window.pastEventsData = [
   {
     title: 'Moniker Coffee',
     date: 'November 2025 • Community',
+    description: 'A morning flow at Moniker Coffee that brought our community together over movement and good coffee.',
     coverLabel: 'Community Partner',
     coverImage: 'assets/Moniker.jpg',
     photos: [
@@ -54,6 +57,7 @@ window.pastEventsData = [
   {
     title: 'Studio Casually',
     date: 'September 2025 • Community',
+    description: 'An intentional Pilates session at Studio Casually in San Diego, capped with an event recap reel.',
     coverLabel: 'Community Partner',
     coverImage: 'assets/SC.JPG',
     photos: [
@@ -80,6 +84,7 @@ window.pastEventsData = [
   {
     title: 'Lucia',
     date: 'August 2025 • Hotel Partnership',
+    description: 'Poolside wellness at Lucia — a hotel partnership pairing mindful movement with a beautiful setting.',
     coverLabel: 'Hotel Partnership',
     coverImage: 'assets/Lucia.JPG',
     photos: [
@@ -89,6 +94,7 @@ window.pastEventsData = [
 {
   title: 'Orli Hotel',
   date: 'June 2025 • Hotel Partnership',
+  description: 'A signature guest session at Orli Hotel in La Jolla, blending Pilates with the property\'s elevated atmosphere.',
   coverLabel: 'Hotel Partnership',
   coverImage: 'assets/ORLI1.jpg',
   photos: [

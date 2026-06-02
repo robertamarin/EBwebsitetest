@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Contact — Plan an Event · Ethereal Balance</title>
-<meta name="description" content="Get in touch to plan a corporate, private, residential, or community wellness experience.">
+<title>In Good Company — Our Partners · Ethereal Balance</title>
+<meta name="description" content="The brands, hotels, and communities we've had the privilege of working with at Ethereal Balance.">
 <link rel="icon" href="assets/EBSmall.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/site.css">
 </head>
-<body data-screen-label="Contact">
+<body data-screen-label="In Good Company">
 <nav class="nav is-solid" id="nav">
   <a href="index.html" class="nav__wordmark">ethereal balance</a>
   <ul class="nav__links">
@@ -34,42 +34,20 @@
 </div>
 
 <header class="page-hero"><div class="container">
-  <span class="eyebrow eyebrow--rule">Plan an Event</span>
-  <h1>Let's create<br>something <em>beautiful</em></h1>
-  <p class="lede">Corporate, private, residential, or community — tell us what you're imagining and we'll be in touch within 24 hours.</p>
+  <span class="eyebrow eyebrow--rule">In Good Company</span>
+  <h1>The brands &amp;<br>people we've <em>moved with</em></h1>
+  <p class="lede">We've had the privilege of working with hotels, brands, companies, and communities we admire. A few of the names we've partnered with along the way.</p>
 </div></header>
+
 <section class="section--tight"><div class="container">
-  <div class="media-split" style="align-items:start;gap:72px;">
-    <div class="reveal">
-      <span class="eyebrow eyebrow--rule">Reach Us</span>
-      <h2 class="h2" style="margin:22px 0 28px;max-width:14ch;">We'd love to hear from you.</h2>
-      <div class="cmethod"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="m3 7 9 6 9-6"/></svg><div><h4>Email</h4><p><a href="mailto:etherealbalancee@gmail.com">etherealbalancee@gmail.com</a></p></div></div>
-      <div class="cmethod"><svg viewBox="0 0 24 24"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><div><h4>Based In</h4><p>San Diego, California — serving clients nationwide</p></div></div>
-      <div class="cmethod"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M16 12v1.5a2.5 2.5 0 0 0 5 0V12a9 9 0 1 0-3.6 7.2"/></svg><div><h4>Follow Along</h4><p><a href="https://www.instagram.com/ethereal_balancee/?hl=en" target="_blank" rel="noopener">@ethereal_balancee</a></p></div></div>
-    </div>
-    <div class="form-card reveal" data-d="1">
-      <form id="contactForm" action="https://formspree.io/f/mnjjadqb" method="POST">
-        <div class="field-row">
-          <div class="field"><label for="contactName">Your name</label><input type="text" id="contactName" name="name" required placeholder="Jane Smith"></div>
-          <div class="field"><label for="contactEmail">Email address</label><input type="email" id="contactEmail" name="email" required placeholder="jane@company.com"></div>
-        </div>
-        <div class="field"><label for="inquiryType">Inquiry type</label>
-          <select id="inquiryType" name="inquiryType" required>
-            <option value="">Select an option…</option>
-            <option value="corporate">Corporate event</option>
-            <option value="private">Private event</option>
-            <option value="residential">Residential event</option>
-            <option value="training">Training (EB Method)</option>
-            <option value="community">Community event</option>
-            <option value="other">General inquiry</option>
-          </select>
-        </div>
-        <div class="field"><label for="contactMessage">Your message</label><textarea id="contactMessage" name="message" rows="5" required placeholder="Tell us about your vision…"></textarea></div>
-        <input type="hidden" name="_subject" value="New Inquiry from Ethereal Balance Website">
-        <button type="submit" class="btn btn-fill" style="width:100%;justify-content:center;">Send message <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
-      </form>
-    </div>
-  </div>
+  <div class="partners-grid" id="partnersList"></div>
+</div></section>
+
+<section class="section bg-forest"><div class="container cta-band reveal">
+  <span class="eyebrow eyebrow--rule eyebrow--center">Let's Begin</span>
+  <h2 class="serif" style="margin-top:22px;">Let's work together.</h2>
+  <p class="lede">Partner with us for a corporate, residential, private, or community experience.</p>
+  <a href="contact.html" class="btn btn-light">Contact us <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
 </div></section>
 
 <footer class="footer">
@@ -95,5 +73,6 @@
 <script src="events.js"></script>
 <script src="js/site.js"></script>
 <script type="module" src="js/eb-firebase.js"></script>
+<script type="module" src="js/partners.js"></script>
 </body>
 </html>

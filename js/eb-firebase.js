@@ -38,7 +38,7 @@ window._firestoreReady = (async () => {
     const snap = await getDocs(query(collection(db,'gallery'), where('active','==',true)));
     if(snap.size > 0){
       window._firestoreGallery = snap.docs.map(d=>{ const x=d.data(); return {
-        title:x.title||'', date:x.date||'', coverImage:x.coverImage||'', coverLabel:x.coverLabel||x.title||'',
+        title:x.title||'', date:x.date||'', description:x.description||'', coverImage:x.coverImage||'', coverLabel:x.coverLabel||x.title||'',
         _sortOrder:x.sortOrder||0,
         photos:(x.photos||[]).map(p=>({src:p.url||p.src||'', label:p.label||'', type:p.type||'image', poster:p.poster||''}))
       };});
