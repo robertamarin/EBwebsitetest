@@ -66,6 +66,18 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     Instructors
                 </button>
+                <button class="admin-nav-item" data-section="testimonials" onclick="switchAdminSection('testimonials')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    Testimonials
+                </button>
+                <button class="admin-nav-item" data-section="pageimages" onclick="switchAdminSection('pageimages')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    Page Images
+                </button>
+                <button class="admin-nav-item" data-section="sitetext" onclick="switchAdminSection('sitetext')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+                    Site Text
+                </button>
                 <button class="admin-nav-item" data-section="community" onclick="switchAdminSection('community')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
                     Community
@@ -208,6 +220,59 @@
                 </div>
                 <div class="admin-event-cards" id="adminInstructorsGrid">
                     <p style="padding: 40px; text-align: center; color: var(--stone);">Loading...</p>
+                </div>
+            </div>
+
+            <!-- TESTIMONIALS SECTION -->
+            <div class="admin-section" id="sectionTestimonials" style="display:none;">
+                <div class="admin-section-header">
+                    <h2>Testimonials</h2>
+                    <button class="btn-admin-primary" onclick="openTestimonialEditor()">+ Add Testimonial</button>
+                </div>
+                <div class="admin-event-cards" id="adminTestimonialsGrid">
+                    <p style="padding: 40px; text-align: center; color: var(--stone);">Loading...</p>
+                </div>
+            </div>
+
+            <!-- PAGE IMAGES SECTION -->
+            <div class="admin-section" id="sectionPageimages" style="display:none;">
+                <div class="admin-section-header">
+                    <h2>Page Images</h2>
+                </div>
+                <p style="margin:-8px 0 24px;color:var(--stone);font-size:0.9rem;max-width:680px;">
+                    Swap any image on the public site without touching code. Upload a new photo for a slot and it replaces that image everywhere it appears on that page. Leave a slot empty to use the built-in default.
+                </p>
+                <div id="adminPageImages">
+                    <p style="padding: 40px; text-align: center; color: var(--stone);">Loading...</p>
+                </div>
+            </div>
+
+            <!-- SITE TEXT SECTION -->
+            <div class="admin-section" id="sectionSitetext" style="display:none;">
+                <div class="admin-section-header">
+                    <h2>Site Text</h2>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <select id="siteTextPageSelect" onchange="loadSiteText()" style="padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:white;">
+                            <option value="index.html">Homepage</option>
+                            <option value="work-with-us.html">Work With Us</option>
+                            <option value="corporate.html">Corporate</option>
+                            <option value="residential.html">Residential</option>
+                            <option value="private.html">Private</option>
+                            <option value="training.html">Training</option>
+                            <option value="about.html">About</option>
+                            <option value="events.html">Events</option>
+                            <option value="partners.html">In Good Company</option>
+                            <option value="contact.html">Contact</option>
+                            <option value="shop.html">Shop</option>
+                        </select>
+                        <button class="btn-admin-primary" onclick="saveSiteText()">Save Text</button>
+                    </div>
+                </div>
+                <p style="margin:-8px 0 24px;color:var(--stone);font-size:0.9rem;max-width:680px;">
+                    Edit any heading or paragraph on the public site. Leave a field exactly as its default to keep the built-in copy. You can keep simple formatting tags like &lt;em&gt; (italic accent) and &lt;br&gt; (line break).
+                </p>
+                <div id="adminSiteText">
+                    <p style="padding: 40px; text-align: center; color: var(--stone);">Select a page to edit its text.</p>
                 </div>
             </div>
 
@@ -713,6 +778,82 @@
                 <div class="admin-form-actions">
                     <button type="button" class="btn-admin-secondary" onclick="closeInstructorEditor()">Cancel</button>
                     <button type="submit" class="btn-admin-primary">Save Instructor</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Testimonial Editor Modal -->
+    <div class="admin-modal-overlay" id="testimonialEditorModal" style="display:none;">
+        <div class="admin-modal">
+            <button class="admin-modal-close" onclick="closeTestimonialEditor()">&times;</button>
+            <h2 id="testimonialEditorTitle">Add Testimonial</h2>
+            <form id="testimonialEditorForm" onsubmit="saveTestimonial(event)">
+                <input type="hidden" id="testimonialEditId" value="">
+
+                <div class="admin-form-group">
+                    <label>Quote</label>
+                    <textarea id="testimonialQuote" required placeholder="What they said..."></textarea>
+                </div>
+
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label>Name</label>
+                        <input type="text" id="testimonialName" required placeholder="e.g., Sarah Lopez">
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Title / Role</label>
+                        <input type="text" id="testimonialRole" placeholder="e.g., Head of People">
+                    </div>
+                </div>
+
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label>Company / Venue</label>
+                        <input type="text" id="testimonialCompany" placeholder="e.g., Park Hyatt Aviara">
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Category</label>
+                        <select id="testimonialCategory" required>
+                            <option value="Corporate">Corporate</option>
+                            <option value="Residential">Residential</option>
+                            <option value="Private">Private</option>
+                            <option value="Retreats">Retreats</option>
+                            <option value="Training">Training</option>
+                            <option value="Class">Class</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Image / Logo (optional)</label>
+                    <div class="image-upload-zone" id="testimonialImageZone">
+                        <input type="file" id="testimonialImageInput" accept="image/jpeg,image/png,image/webp" hidden>
+                        <span class="upload-icon">+</span>
+                        <div class="upload-text">
+                            Drag &amp; drop or <strong>click to browse</strong>
+                        </div>
+                        <div class="upload-limits">Max 10MB. JPG, PNG, WebP. Auto-compressed.</div>
+                    </div>
+                    <div class="image-preview-grid" id="testimonialImagePreview"></div>
+                </div>
+
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label>Display Order</label>
+                        <input type="number" id="testimonialOrder" min="0" value="0" placeholder="0">
+                    </div>
+                    <div class="admin-form-group" style="display:flex; align-items:flex-end; padding-bottom: 20px;">
+                        <div class="admin-form-check" style="margin-bottom:0;">
+                            <input type="checkbox" id="testimonialActive" checked>
+                            <label for="testimonialActive">Active (visible on site)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-form-actions">
+                    <button type="button" class="btn-admin-secondary" onclick="closeTestimonialEditor()">Cancel</button>
+                    <button type="submit" class="btn-admin-primary">Save Testimonial</button>
                 </div>
             </form>
         </div>

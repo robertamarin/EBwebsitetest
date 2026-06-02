@@ -381,6 +381,7 @@ window.switchAdminSection = function(section) {
         case 'instructors': loadInstructors(); break;
         case 'testimonials': loadTestimonials(); break;
         case 'pageimages': loadPageImages(); break;
+        case 'sitetext': loadSiteText(); break;
         case 'community': loadSubscribers(); break;
         case 'orders': loadOrders(); break;
         case 'partners': loadPartners(); break;
@@ -1887,6 +1888,106 @@ window.resetPageImage = async function(slotKey) {
     } catch (err) {
         console.error('Reset failed:', err);
         showToast('Reset failed', 'error');
+    }
+};
+
+// ============================================
+// SITE TEXT (admin-editable copy)
+// ============================================
+// MUST stay identical to EB_TEXT_SELECTORS in js/eb-firebase.js so the
+// positional slot keys match between the editor and the public site.
+const EB_TEXT_SELECTORS = ['.hero__eyebrow','.hero h1','.hero__sub','.page-hero .eyebrow','.page-hero h1','.page-hero .lede','.section .eyebrow','.section .h2','.section .lede','.section--tight .eyebrow','.section--tight .h2','.section--tight .lede','.why__h','.why__p','.feature-card h3','.feature-card p','.exp-row__title','.exp-row__desc','.offer-row__kicker','.offer-row__title','.offer-row__desc','.step h3','.step p','.stat__num','.stat__label','.media-split__tag','.quote','.break__attr','.community-inner h2','.community-inner p','.cta-band h2','.cta-band .lede','.footer__brand p'];
+
+function adminPagePrefix(filename) {
+    let f = (filename || 'index.html').split('/').pop();
+    if (!f) f = 'index.html';
+    return f.replace(/\.html$/i, '') || 'index';
+}
+
+let pageTextData = {};
+
+window.loadSiteText = async function() {
+    const container = document.getElementById('adminSiteText');
+    const select = document.getElementById('siteTextPageSelect');
+    if (!container || !select) return;
+    const page = select.value;
+    container.innerHTML = '<p style="padding:40px;text-align:center;color:var(--stone);">Loading…</p>';
+
+    try {
+        const snap = await getDoc(doc(db, 'settings', 'pageText'));
+        pageTextData = (snap.exists() && snap.data().text) ? snap.data().text : {};
+    } catch (e) {
+        console.error('Error loading page text:', e);
+        pageTextData = {};
+    }
+
+    let html;
+    try {
+        const res = await fetch(page, { cache: 'no-store' });
+        html = await res.text();
+    } catch (e) {
+        container.innerHTML = '<p style="padding:40px;text-align:center;color:var(--red);">Could not load ' + escapeHtml(page) + '.</p>';
+        return;
+    }
+
+    const docp = new DOMParser().parseFromString(html, 'text/html');
+    let els;
+    try { els = docp.querySelectorAll(EB_TEXT_SELECTORS.join(',')); }
+    catch (e) { els = []; }
+    const prefix = adminPagePrefix(page);
+
+    const fields = [];
+    els.forEach((el, i) => {
+        const def = (el.innerHTML || '').trim();
+        if (!def) return;
+        const key = prefix + '.' + i;
+        const current = (pageTextData[key] != null && pageTextData[key] !== '') ? pageTextData[key] : def;
+        const preview = (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 70) || '(text)';
+        const tag = el.tagName.toLowerCase();
+        const rows = Math.min(6, Math.max(2, Math.ceil(current.length / 60)));
+        fields.push(`
+            <div class="sitetext-field">
+                <label><span class="sitetext-preview">${escapeHtml(preview)}</span><span class="sitetext-key">${tag} · ${escapeHtml(key)}</span></label>
+                <textarea data-key="${escapeAttr(key)}" data-default="${escapeAttr(def)}" rows="${rows}">${escapeHtml(current)}</textarea>
+            </div>`);
+    });
+
+    if (!fields.length) {
+        container.innerHTML = '<p style="padding:40px;text-align:center;color:var(--stone);">No editable text found on this page.</p>';
+        return;
+    }
+    container.innerHTML = '<div class="sitetext-grid">' + fields.join('') + '</div>';
+};
+
+window.saveSiteText = async function() {
+    const container = document.getElementById('adminSiteText');
+    if (!container) return;
+    const areas = container.querySelectorAll('textarea[data-key]');
+    if (!areas.length) { showToast('Nothing to save', 'error'); return; }
+    showToast('Saving text…', 'success');
+
+    // Build a flat map of literal (dotted) keys -> value. Dots stay literal
+    // because we pass a nested object to setDoc(merge), not a field path.
+    const textMap = {};
+    areas.forEach(area => {
+        const key = area.dataset.key;
+        const def = (area.dataset.default || '').trim();
+        const val = area.value.trim();
+        // Store an override only when it differs from the default; otherwise
+        // clear it so the page falls back to the built-in copy.
+        if (val !== def) textMap[key] = val;
+        else if (pageTextData[key] != null && pageTextData[key] !== '') textMap[key] = '';
+    });
+
+    if (!Object.keys(textMap).length) { showToast('No changes to save', 'success'); return; }
+
+    try {
+        await setDoc(doc(db, 'settings', 'pageText'), { text: textMap, updatedAt: serverTimestamp() }, { merge: true });
+        Object.assign(pageTextData, textMap);
+        showToast('Text saved', 'success');
+    } catch (error) {
+        console.error('Error saving site text:', error);
+        showToast('Error saving text: ' + error.message, 'error');
     }
 };
 

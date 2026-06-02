@@ -20,6 +20,17 @@ let db;
 try { db = getFirestore(initializeApp(firebaseConfig)); }
 catch(e){ console.log('Firebase init skipped:', e.message); }
 
+// ---- editable text infrastructure ----
+// Shared with admin.js (js/admin.js EB_TEXT_SELECTORS) — keep IDENTICAL so the
+// positional slot keys line up between the public site and the admin editor.
+const EB_TEXT_SELECTORS = ['.hero__eyebrow','.hero h1','.hero__sub','.page-hero .eyebrow','.page-hero h1','.page-hero .lede','.section .eyebrow','.section .h2','.section .lede','.section--tight .eyebrow','.section--tight .h2','.section--tight .lede','.why__h','.why__p','.feature-card h3','.feature-card p','.exp-row__title','.exp-row__desc','.offer-row__kicker','.offer-row__title','.offer-row__desc','.step h3','.step p','.stat__num','.stat__label','.media-split__tag','.quote','.break__attr','.community-inner h2','.community-inner p','.cta-band h2','.cta-band .lede','.footer__brand p'];
+function ebPagePrefix(name){
+  let f = (name != null ? name : (location.pathname.split('/').pop() || 'index.html'));
+  f = f.split('/').pop();
+  if(!f) f = 'index.html';
+  return f.replace(/\.html$/i,'') || 'index';
+}
+
 // ---- live data overrides ----
 window._firestoreReady = (async () => {
   if(!db) return false;
@@ -84,6 +95,29 @@ window._firestoreReady = (async () => {
       if(url) img.src = url;
     });
   } catch(e){ console.log('Page images skipped:', e.message); }
+})();
+
+// ---- page text overrides ----
+// Every matched text element is tagged with a positional data-edit key and,
+// if the admin has set an override for that key, its content is swapped.
+// The authored HTML stays as the fallback, so nothing changes by default.
+(async () => {
+  if(!db) return;
+  let els;
+  try { els = document.querySelectorAll(EB_TEXT_SELECTORS.join(',')); }
+  catch(e){ return; }
+  if(!els.length) return;
+  const prefix = ebPagePrefix();
+  els.forEach((el,i)=>{ el.dataset.edit = prefix + '.' + i; });
+  try {
+    const snap = await getDoc(doc(db,'settings','pageText'));
+    if(!snap.exists()) return;
+    const text = snap.data().text || {};
+    els.forEach(el=>{
+      const v = text[el.dataset.edit];
+      if(v != null && v !== '') el.innerHTML = v;
+    });
+  } catch(e){ console.log('Page text skipped:', e.message); }
 })();
 
 // ---- community signup ----
