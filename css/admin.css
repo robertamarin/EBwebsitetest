@@ -1483,3 +1483,59 @@ h1, h2, h3, h4 {
     background: #fff;
     line-height: 1.5;
 }
+
+/* Rich text editor */
+.rte-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid rgba(44, 44, 44, 0.12);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+.rte-toolbar button[data-cmd] {
+    min-width: 36px;
+    height: 32px;
+    border: 1px solid rgba(44, 44, 44, 0.18);
+    background: #faf8f5;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    color: #2c2c2c;
+}
+.rte-toolbar button[data-cmd]:hover { background: #efece6; }
+.rte-hint { font-size: 12px; color: #9a9388; margin-left: 4px; }
+.rte-row { display: flex; gap: 8px; align-items: flex-start; }
+.rte {
+    flex: 1;
+    min-height: 42px;
+    padding: 10px 12px;
+    border: 1px solid rgba(44, 44, 44, 0.16);
+    border-radius: 8px;
+    background: #fff;
+    font-size: 14px;
+    line-height: 1.5;
+    outline: none;
+}
+.rte:focus { border-color: #7a9167; box-shadow: 0 0 0 2px rgba(122, 145, 103, 0.18); }
+.rte em { font-style: italic; }
+.rte strong { font-weight: 600; }
+.rte-reset {
+    align-self: center;
+    border: 1px solid rgba(44, 44, 44, 0.18);
+    background: #fff;
+    border-radius: 6px;
+    padding: 7px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    color: #9a5a4a;
+    white-space: nowrap;
+}
+.rte-reset:hover { background: #f7f0ee; }

@@ -1906,6 +1906,64 @@ function adminPagePrefix(filename) {
 
 let pageTextData = {};
 
+// Normalize rich-text editor output to the site's own inline tags so the
+// public CSS (which styles <em> and <strong>) keeps working, and strip the
+// stray markup contenteditable browsers sometimes produce.
+function normalizeRichText(html) {
+    let s = String(html == null ? '' : html);
+    s = s.replace(/<div[^>]*>/gi, '<br>').replace(/<\/div>/gi, '');
+    s = s.replace(/<p[^>]*>/gi, '').replace(/<\/p>/gi, '<br>');
+    s = s.replace(/<b(\s[^>]*)?>/gi, '<strong>').replace(/<\/b>/gi, '</strong>');
+    s = s.replace(/<i(\s[^>]*)?>/gi, '<em>').replace(/<\/i>/gi, '</em>');
+    s = s.replace(/<\/?span[^>]*>/gi, '');
+    s = s.replace(/&nbsp;/gi, ' ');
+    s = s.replace(/^(?:\s|<br\s*\/?>)+|(?:\s|<br\s*\/?>)+$/gi, ''); // trim leading/trailing breaks
+    return s;
+}
+
+// Rich-text toolbar: one shared toolbar acting on whichever field is focused.
+let activeRte = null;
+let rteWired = false;
+function wireRte() {
+    if (rteWired) return;
+    rteWired = true;
+    document.addEventListener('focusin', (e) => {
+        if (e.target.classList && e.target.classList.contains('rte')) activeRte = e.target;
+    });
+    // keep selection when clicking a toolbar button
+    document.addEventListener('mousedown', (e) => {
+        if (e.target.closest('#rteToolbar [data-cmd]')) e.preventDefault();
+    });
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('#rteToolbar [data-cmd]');
+        if (btn) {
+            e.preventDefault();
+            if (!activeRte) return;
+            activeRte.focus();
+            try { document.execCommand('styleWithCSS', false, false); } catch (_) {}
+            document.execCommand(btn.dataset.cmd, false, null);
+            return;
+        }
+        const reset = e.target.closest('.rte-reset');
+        if (reset) {
+            e.preventDefault();
+            const ed = reset.closest('.sitetext-field')?.querySelector('.rte');
+            if (ed) ed.innerHTML = ed.dataset.default || '';
+        }
+    });
+    // Enter inserts a line break (not a new block); paste arrives as plain text
+    document.addEventListener('keydown', (e) => {
+        if (!e.target.classList || !e.target.classList.contains('rte')) return;
+        if (e.key === 'Enter') { e.preventDefault(); document.execCommand('insertHTML', false, '<br>'); }
+    });
+    document.addEventListener('paste', (e) => {
+        if (!e.target.classList || !e.target.classList.contains('rte')) return;
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+        document.execCommand('insertText', false, text);
+    });
+}
+
 window.loadSiteText = async function() {
     const container = document.getElementById('adminSiteText');
     const select = document.getElementById('siteTextPageSelect');
@@ -1944,11 +2002,13 @@ window.loadSiteText = async function() {
         const current = (pageTextData[key] != null && pageTextData[key] !== '') ? pageTextData[key] : def;
         const preview = (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 70) || '(text)';
         const tag = el.tagName.toLowerCase();
-        const rows = Math.min(6, Math.max(2, Math.ceil(current.length / 60)));
         fields.push(`
             <div class="sitetext-field">
                 <label><span class="sitetext-preview">${escapeHtml(preview)}</span><span class="sitetext-key">${tag} · ${escapeHtml(key)}</span></label>
-                <textarea data-key="${escapeAttr(key)}" data-default="${escapeAttr(def)}" rows="${rows}">${escapeHtml(current)}</textarea>
+                <div class="rte-row">
+                    <div class="rte" contenteditable="true" data-key="${escapeAttr(key)}" data-default="${escapeAttr(def)}">${current}</div>
+                    <button type="button" class="rte-reset" title="Restore the original text">Reset</button>
+                </div>
             </div>`);
     });
 
@@ -1956,13 +2016,21 @@ window.loadSiteText = async function() {
         container.innerHTML = '<p style="padding:40px;text-align:center;color:var(--stone);">No editable text found on this page.</p>';
         return;
     }
-    container.innerHTML = '<div class="sitetext-grid">' + fields.join('') + '</div>';
+    const toolbar = `
+        <div class="rte-toolbar" id="rteToolbar">
+            <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+            <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+            <button type="button" data-cmd="removeFormat" title="Clear formatting">Clear</button>
+            <span class="rte-hint">Click into any text, highlight words, then press B or I. Enter adds a line break.</span>
+        </div>`;
+    container.innerHTML = toolbar + '<div class="sitetext-grid">' + fields.join('') + '</div>';
+    wireRte();
 };
 
 window.saveSiteText = async function() {
     const container = document.getElementById('adminSiteText');
     if (!container) return;
-    const areas = container.querySelectorAll('textarea[data-key]');
+    const areas = container.querySelectorAll('.rte[data-key]');
     if (!areas.length) { showToast('Nothing to save', 'error'); return; }
     showToast('Saving text…', 'success');
 
@@ -1971,8 +2039,8 @@ window.saveSiteText = async function() {
     const textMap = {};
     areas.forEach(area => {
         const key = area.dataset.key;
-        const def = (area.dataset.default || '').trim();
-        const val = area.value.trim();
+        const def = normalizeRichText(area.dataset.default || '');
+        const val = normalizeRichText(area.innerHTML || '');
         // Store an override only when it differs from the default; otherwise
         // clear it so the page falls back to the built-in copy.
         if (val !== def) textMap[key] = val;
