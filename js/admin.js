@@ -1817,9 +1817,23 @@ const PAGE_IMAGE_MANIFEST = [
 
 let pageImagesData = {};
 
+// Which file each manifest group lives on, so we can read the built-in
+// default image (the authored <img src>) and actually show it.
+const PAGE_IMAGE_FILES = {
+    Homepage: 'index.html',
+    Corporate: 'corporate.html',
+    Residential: 'residential.html',
+    Private: 'private.html',
+    Training: 'training.html',
+    About: 'about.html'
+};
+let pageImageDefaults = {};
+
 async function loadPageImages() {
     const container = document.getElementById('adminPageImages');
     if (!container) return;
+    container.innerHTML = '<p style="padding:40px;text-align:center;color:var(--stone);">Loading images…</p>';
+
     try {
         const snap = await getDoc(doc(db, 'settings', 'pageImages'));
         pageImagesData = (snap.exists() && snap.data().images) ? snap.data().images : {};
@@ -1827,26 +1841,46 @@ async function loadPageImages() {
         console.error('Error loading page images:', e);
         pageImagesData = {};
     }
+
+    // Read each page's authored <img> so we can display the real default photo.
+    pageImageDefaults = {};
+    const files = [...new Set(Object.values(PAGE_IMAGE_FILES))];
+    await Promise.all(files.map(async (f) => {
+        try {
+            const res = await fetch(f, { cache: 'no-store' });
+            const docp = new DOMParser().parseFromString(await res.text(), 'text/html');
+            docp.querySelectorAll('img[data-img-slot]').forEach(img => {
+                pageImageDefaults[img.dataset.imgSlot] = img.getAttribute('src') || '';
+            });
+        } catch (e) { /* leave defaults missing for this page */ }
+    }));
+
     container.innerHTML = PAGE_IMAGE_MANIFEST.map(group => `
         <div style="margin-bottom:36px;">
             <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;margin:0 0 16px;border-bottom:1px solid rgba(44,44,44,0.1);padding-bottom:8px;">${escapeHtml(group.page)}</h3>
             <div class="page-image-grid">
                 ${group.slots.map(slot => {
-                    const url = pageImagesData[slot.key] || '';
+                    const override = pageImagesData[slot.key] || '';
+                    const def = pageImageDefaults[slot.key] || '';
+                    const shown = override || def;
                     const safe = slot.key.replace(/\./g, '_');
+                    const badge = override
+                        ? '<span class="page-image-badge custom">Custom</span>'
+                        : '<span class="page-image-badge default">Default</span>';
                     return `
                     <div class="page-image-card">
                         <div class="page-image-thumb" id="thumb_${safe}">
-                            ${url ? `<img src="${escapeAttr(url)}" alt="">` : '<span class="page-image-empty">Default</span>'}
+                            ${shown ? `<img src="${escapeAttr(shown)}" alt="" loading="lazy">` : '<span class="page-image-empty">No image</span>'}
+                            ${badge}
                         </div>
                         <div class="page-image-meta">
                             <strong>${escapeHtml(slot.label)}</strong>
                             <span class="page-image-key">${escapeHtml(slot.key)}</span>
                             <div class="page-image-actions">
-                                <label class="btn-admin-secondary page-image-btn">Upload
+                                <label class="btn-admin-secondary page-image-btn">${override ? 'Replace' : 'Upload'}
                                     <input type="file" accept="image/jpeg,image/png,image/webp" hidden onchange="uploadPageImage('${slot.key}', this)">
                                 </label>
-                                ${url ? `<button type="button" class="btn-admin-secondary" style="color:#c0392b;" onclick="resetPageImage('${slot.key}')">Reset</button>` : ''}
+                                ${override ? `<button type="button" class="btn-admin-secondary" style="color:#c0392b;" onclick="resetPageImage('${slot.key}')">Reset to default</button>` : ''}
                             </div>
                         </div>
                     </div>`;

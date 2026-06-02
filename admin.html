@@ -239,9 +239,15 @@
                 <div class="admin-section-header">
                     <h2>Page Images</h2>
                 </div>
-                <p style="margin:-8px 0 24px;color:var(--stone);font-size:0.9rem;max-width:680px;">
-                    Swap any image on the public site without touching code. Upload a new photo for a slot and it replaces that image everywhere it appears on that page. Leave a slot empty to use the built-in default.
-                </p>
+                <div class="admin-legend">
+                    <strong>How to change the photos on your website</strong>
+                    <ul>
+                        <li>Each card shows the <b>photo that is live right now</b> for that spot on the page.</li>
+                        <li>A <span class="page-image-badge default" style="position:static;">Default</span> tag means it's the original built-in photo. A <span class="page-image-badge custom" style="position:static;">Custom</span> tag means you've uploaded your own.</li>
+                        <li>Click <span class="key-btn">Upload</span> / <span class="key-btn">Replace</span> to choose a new photo (JPG or PNG). It swaps in instantly, everywhere that photo appears on the page.</li>
+                        <li>Click <span class="key-btn">Reset to default</span> to go back to the original photo.</li>
+                    </ul>
+                </div>
                 <div id="adminPageImages">
                     <p style="padding: 40px; text-align: center; color: var(--stone);">Loading...</p>
                 </div>
@@ -268,9 +274,17 @@
                         <button class="btn-admin-primary" onclick="saveSiteText()">Save Text</button>
                     </div>
                 </div>
-                <p style="margin:-8px 0 24px;color:var(--stone);font-size:0.9rem;max-width:680px;">
-                    Edit any heading or paragraph on the public site. Leave a field exactly as its default to keep the built-in copy. You can keep simple formatting tags like &lt;em&gt; (italic accent) and &lt;br&gt; (line break).
-                </p>
+                <div class="admin-legend">
+                    <strong>How to edit text on your website</strong>
+                    <ul>
+                        <li><b>Pick a page</b> from the dropdown above. Every heading and paragraph on it appears in its own box.</li>
+                        <li><b>Click into a box</b> and type to change the wording.</li>
+                        <li>To format, <b>highlight the words</b> first, then click <span class="key-btn"><b>B</b></span> for <strong>bold</strong> or <span class="key-btn"><i>I</i></span> for <em>italic</em>. <span class="key-btn">Clear</span> removes formatting.</li>
+                        <li>Press <span class="key-btn">Enter</span> to add a line break inside a heading or paragraph.</li>
+                        <li><span class="key-btn">Reset</span> next to a box puts the original wording back. Anything you leave unchanged keeps the built-in default.</li>
+                        <li>Click <b>Save Text</b> (top right) when you're done. Changes go live on the website right away.</li>
+                    </ul>
+                </div>
                 <div id="adminSiteText">
                     <p style="padding: 40px; text-align: center; color: var(--stone);">Select a page to edit its text.</p>
                 </div>

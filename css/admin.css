@@ -1404,6 +1404,51 @@ h1, h2, h3, h4 {
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+}
+.page-image-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    border-radius: 5px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+.page-image-badge.default { background: rgba(44, 44, 44, 0.62); color: #fff; }
+.page-image-badge.custom { background: #7a9167; color: #fff; }
+
+/* Admin help legend */
+.admin-legend {
+    background: #faf8f5;
+    border: 1px solid rgba(44, 44, 44, 0.12);
+    border-left: 3px solid #7a9167;
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin: -4px 0 24px;
+    max-width: 780px;
+}
+.admin-legend strong {
+    display: block;
+    font-size: 0.95rem;
+    color: #2c2c2c;
+    margin-bottom: 8px;
+}
+.admin-legend ul { margin: 0; padding-left: 18px; }
+.admin-legend li { font-size: 0.88rem; color: #6b6256; margin: 5px 0; line-height: 1.55; }
+.admin-legend .key-btn {
+    display: inline-block;
+    min-width: 20px;
+    text-align: center;
+    border: 1px solid rgba(44, 44, 44, 0.25);
+    border-radius: 4px;
+    padding: 0 6px;
+    font-size: 0.8rem;
+    background: #fff;
+    white-space: nowrap;
 }
 .page-image-thumb img {
     width: 100%;
