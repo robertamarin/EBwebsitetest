@@ -68,6 +68,24 @@ window._firestoreReady = (async () => {
   } catch(e){ console.log('Store settings skipped:', e.message); }
 })();
 
+// ---- page image overrides ----
+// Any <img data-img-slot="page.key"> can be swapped from the admin portal
+// without touching code. The static src stays as the fallback.
+(async () => {
+  if(!db) return;
+  const slots = document.querySelectorAll('img[data-img-slot]');
+  if(!slots.length) return;
+  try {
+    const snap = await getDoc(doc(db,'settings','pageImages'));
+    if(!snap.exists()) return;
+    const images = snap.data().images || {};
+    slots.forEach(img => {
+      const url = images[img.dataset.imgSlot];
+      if(url) img.src = url;
+    });
+  } catch(e){ console.log('Page images skipped:', e.message); }
+})();
+
 // ---- community signup ----
 const form = document.getElementById('communitySignupForm');
 if(form){

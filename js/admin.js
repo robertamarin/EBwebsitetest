@@ -355,6 +355,7 @@ function initAllUploadZones() {
     initUploadZone('galleryCoverZone', 'galleryCoverInput', 'galleryCoverPreview', false);
     initUploadZone('galleryPhotosZone', 'galleryPhotosInput', 'galleryPhotosList', true);
     initUploadZone('instructorImageZone', 'instructorImageInput', 'instructorImagePreview', false);
+    initUploadZone('testimonialImageZone', 'testimonialImageInput', 'testimonialImagePreview', false);
 }
 
 // ============================================
@@ -378,6 +379,8 @@ window.switchAdminSection = function(section) {
         case 'events': loadEvents(); break;
         case 'gallery': loadGalleryItems(); break;
         case 'instructors': loadInstructors(); break;
+        case 'testimonials': loadTestimonials(); break;
+        case 'pageimages': loadPageImages(); break;
         case 'community': loadSubscribers(); break;
         case 'orders': loadOrders(); break;
         case 'partners': loadPartners(); break;
@@ -1632,6 +1635,258 @@ window.deleteInstructor = async function(instructorId, instructorName) {
     } catch (error) {
         console.error('Error deleting instructor:', error);
         showToast('Error deleting instructor', 'error');
+    }
+};
+
+// ============================================
+// TESTIMONIALS
+// ============================================
+let allAdminTestimonials = [];
+
+async function loadTestimonials() {
+    try {
+        let snapshot;
+        try {
+            snapshot = await getDocs(query(collection(db, 'testimonials'), orderBy('order', 'asc')));
+        } catch (e) {
+            snapshot = await getDocs(collection(db, 'testimonials'));
+        }
+        allAdminTestimonials = [];
+        snapshot.forEach(d => allAdminTestimonials.push({ id: d.id, ...d.data() }));
+
+        const container = document.getElementById('adminTestimonialsGrid');
+        if (!container) return;
+        if (allAdminTestimonials.length === 0) {
+            container.innerHTML = '<div class="admin-empty-state"><p>No testimonials yet. Click "+ Add Testimonial" to add one.</p></div>';
+            return;
+        }
+        container.innerHTML = allAdminTestimonials.map(t => `
+            <div class="admin-event-card">
+                ${t.imageUrl ? `<img class="admin-event-card-cover" src="${escapeAttr(t.imageUrl)}" alt="">` : '<div class="admin-event-card-cover"></div>'}
+                <div class="admin-event-card-body">
+                    <h4>${escapeHtml(t.name)}</h4>
+                    <div class="event-meta-text">${escapeHtml([t.title, t.company].filter(Boolean).join(' · '))}</div>
+                    <div style="margin:6px 0;"><span class="status-badge" style="background:#efece6;color:#6b6256;">${escapeHtml(t.category || '')}</span>
+                    <span class="status-badge ${t.isActive !== false ? 'active' : 'inactive'}">${t.isActive !== false ? 'Active' : 'Inactive'}</span></div>
+                </div>
+                <div class="admin-event-card-actions">
+                    <button onclick="editTestimonial('${t.id}')">Edit</button>
+                    <button class="delete" onclick="deleteTestimonial('${t.id}','${escapeAttr((t.name || '').replace(/'/g, ''))}')">Delete</button>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading testimonials:', error);
+        const c = document.getElementById('adminTestimonialsGrid');
+        if (c) c.innerHTML = '<p style="padding:40px;text-align:center;color:var(--red);">Error loading testimonials. Check console for details.</p>';
+    }
+}
+
+window.openTestimonialEditor = function(id) {
+    const modal = document.getElementById('testimonialEditorModal');
+    const title = document.getElementById('testimonialEditorTitle');
+    const form = document.getElementById('testimonialEditorForm');
+    const preview = document.getElementById('testimonialImagePreview');
+    form.reset();
+    document.getElementById('testimonialEditId').value = '';
+    document.getElementById('testimonialOrder').value = allAdminTestimonials.length;
+    document.getElementById('testimonialActive').checked = true;
+    pendingUploads['testimonialImageZone'] = [];
+    preview.dataset.existingUrls = '[]';
+    preview.innerHTML = '';
+    if (id) {
+        title.textContent = 'Edit Testimonial';
+        const t = allAdminTestimonials.find(x => x.id === id);
+        if (t) {
+            document.getElementById('testimonialEditId').value = t.id;
+            document.getElementById('testimonialQuote').value = t.quote || '';
+            document.getElementById('testimonialName').value = t.name || '';
+            document.getElementById('testimonialRole').value = t.title || '';
+            document.getElementById('testimonialCompany').value = t.company || '';
+            document.getElementById('testimonialCategory').value = t.category || 'Corporate';
+            document.getElementById('testimonialOrder').value = t.order ?? 0;
+            document.getElementById('testimonialActive').checked = t.isActive !== false;
+            if (t.imageUrl) {
+                preview.dataset.existingUrls = JSON.stringify([t.imageUrl]);
+                renderPreviews('testimonialImageZone', 'testimonialImagePreview', false);
+            }
+        }
+    } else {
+        title.textContent = 'Add Testimonial';
+    }
+    modal.style.display = 'flex';
+};
+
+window.closeTestimonialEditor = function() {
+    document.getElementById('testimonialEditorModal').style.display = 'none';
+};
+
+window.editTestimonial = function(id) { window.openTestimonialEditor(id); };
+
+window.saveTestimonial = async function(e) {
+    e.preventDefault();
+    showToast('Saving testimonial...', 'success');
+    try {
+        const editId = document.getElementById('testimonialEditId').value;
+        const newUrls = await uploadAllPending('testimonialImageZone', 'images/testimonials');
+        const preview = document.getElementById('testimonialImagePreview');
+        const existingUrls = preview.dataset.existingUrls ? JSON.parse(preview.dataset.existingUrls) : [];
+        const imageUrl = newUrls[0] || existingUrls[0] || '';
+        const data = {
+            quote: document.getElementById('testimonialQuote').value.trim(),
+            name: document.getElementById('testimonialName').value.trim(),
+            title: document.getElementById('testimonialRole').value.trim(),
+            company: document.getElementById('testimonialCompany').value.trim(),
+            category: document.getElementById('testimonialCategory').value,
+            imageUrl,
+            order: parseInt(document.getElementById('testimonialOrder').value) || 0,
+            isActive: document.getElementById('testimonialActive').checked,
+            updatedAt: serverTimestamp()
+        };
+        if (editId) {
+            await updateDoc(doc(db, 'testimonials', editId), data);
+            showToast('Testimonial updated', 'success');
+        } else {
+            data.createdAt = serverTimestamp();
+            await addDoc(collection(db, 'testimonials'), data);
+            showToast('Testimonial created', 'success');
+        }
+        closeTestimonialEditor();
+        loadTestimonials();
+    } catch (error) {
+        console.error('Error saving testimonial:', error);
+        showToast('Error saving testimonial: ' + error.message, 'error');
+    }
+};
+
+window.deleteTestimonial = async function(id, name) {
+    if (!confirm(`Delete testimonial from "${name}"? This cannot be undone.`)) return;
+    try {
+        await deleteDoc(doc(db, 'testimonials', id));
+        showToast('Testimonial deleted', 'success');
+        loadTestimonials();
+    } catch (error) {
+        console.error('Error deleting testimonial:', error);
+        showToast('Error deleting testimonial', 'error');
+    }
+};
+
+// ============================================
+// PAGE IMAGES (admin-editable image slots)
+// ============================================
+const PAGE_IMAGE_MANIFEST = [
+    { page: 'Homepage', slots: [
+        { key: 'home.hero', label: 'Hero background' },
+        { key: 'home.approach', label: 'Approach / studio photo' },
+        { key: 'home.why1', label: 'Why · Connection is the real luxury' },
+        { key: 'home.why2', label: 'Why · Show your people you care' },
+        { key: 'home.why3', label: 'Why · Marketing that does not feel like marketing' },
+        { key: 'home.break', label: 'Quote break photo' }
+    ]},
+    { page: 'Corporate', slots: [
+        { key: 'corporate.whypartner', label: 'Why partner photo' },
+        { key: 'corporate.retreat', label: 'Retreat (Park Hyatt) photo' },
+        { key: 'corporate.why1', label: 'Why · Connection is the real luxury' },
+        { key: 'corporate.why2', label: 'Why · Show your people you care' },
+        { key: 'corporate.why3', label: 'Why · Marketing that does not feel like marketing' }
+    ]},
+    { page: 'Residential', slots: [
+        { key: 'residential.event', label: 'Resident event photo' },
+        { key: 'residential.onproperty', label: 'On-property photo' },
+        { key: 'residential.why1', label: 'Why · Connection is the real luxury' },
+        { key: 'residential.why2', label: 'Why · Show your residents you care' },
+        { key: 'residential.why3', label: 'Why · Marketing that does not feel like marketing' }
+    ]},
+    { page: 'Private', slots: [
+        { key: 'private.idea', label: 'The idea photo' },
+        { key: 'private.included', label: "What's included photo" },
+        { key: 'private.break', label: 'Quote break photo' }
+    ]},
+    { page: 'Training', slots: [
+        { key: 'training.method', label: 'The method photo' },
+        { key: 'training.handson', label: 'Hands-on photo' },
+        { key: 'training.gyms', label: 'For gyms & studios photo' }
+    ]},
+    { page: 'About', slots: [
+        { key: 'about.founders', label: 'Founders (Jaz & Megan) photo' },
+        { key: 'about.ebmethod', label: 'EB Method teaser photo' },
+        { key: 'about.break', label: 'Quote break photo' }
+    ]}
+];
+
+let pageImagesData = {};
+
+async function loadPageImages() {
+    const container = document.getElementById('adminPageImages');
+    if (!container) return;
+    try {
+        const snap = await getDoc(doc(db, 'settings', 'pageImages'));
+        pageImagesData = (snap.exists() && snap.data().images) ? snap.data().images : {};
+    } catch (e) {
+        console.error('Error loading page images:', e);
+        pageImagesData = {};
+    }
+    container.innerHTML = PAGE_IMAGE_MANIFEST.map(group => `
+        <div style="margin-bottom:36px;">
+            <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;margin:0 0 16px;border-bottom:1px solid rgba(44,44,44,0.1);padding-bottom:8px;">${escapeHtml(group.page)}</h3>
+            <div class="page-image-grid">
+                ${group.slots.map(slot => {
+                    const url = pageImagesData[slot.key] || '';
+                    const safe = slot.key.replace(/\./g, '_');
+                    return `
+                    <div class="page-image-card">
+                        <div class="page-image-thumb" id="thumb_${safe}">
+                            ${url ? `<img src="${escapeAttr(url)}" alt="">` : '<span class="page-image-empty">Default</span>'}
+                        </div>
+                        <div class="page-image-meta">
+                            <strong>${escapeHtml(slot.label)}</strong>
+                            <span class="page-image-key">${escapeHtml(slot.key)}</span>
+                            <div class="page-image-actions">
+                                <label class="btn-admin-secondary page-image-btn">Upload
+                                    <input type="file" accept="image/jpeg,image/png,image/webp" hidden onchange="uploadPageImage('${slot.key}', this)">
+                                </label>
+                                ${url ? `<button type="button" class="btn-admin-secondary" style="color:#c0392b;" onclick="resetPageImage('${slot.key}')">Reset</button>` : ''}
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+window.uploadPageImage = async function(slotKey, input) {
+    if (!input.files || !input.files.length) return;
+    const file = input.files[0];
+    const error = validateFile(file);
+    if (error) { showToast(error, 'error'); input.value = ''; return; }
+    showToast('Uploading image...', 'success');
+    try {
+        const blob = await compressImage(file);
+        const safeKey = slotKey.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        const url = await uploadImageToStorage(blob, `images/pages/${safeKey}_${Date.now()}.jpg`);
+        await setDoc(doc(db, 'settings', 'pageImages'), { images: { [slotKey]: url }, updatedAt: serverTimestamp() }, { merge: true });
+        pageImagesData[slotKey] = url;
+        showToast('Image updated', 'success');
+        loadPageImages();
+    } catch (err) {
+        console.error('Page image upload failed:', err);
+        showToast('Upload failed: ' + err.message, 'error');
+    } finally {
+        input.value = '';
+    }
+};
+
+window.resetPageImage = async function(slotKey) {
+    if (!confirm('Reset this image back to the built-in default?')) return;
+    try {
+        await setDoc(doc(db, 'settings', 'pageImages'), { images: { [slotKey]: '' }, updatedAt: serverTimestamp() }, { merge: true });
+        delete pageImagesData[slotKey];
+        showToast('Reset to default', 'success');
+        loadPageImages();
+    } catch (err) {
+        console.error('Reset failed:', err);
+        showToast('Reset failed', 'error');
     }
 };
 
