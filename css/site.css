@@ -175,6 +175,9 @@ p{text-wrap:pretty;}
   text-transform:uppercase;color:var(--ink);opacity:.85;white-space:nowrap;transition:background .25s,opacity .25s;}
 .nav__dropdown a::after{display:none !important;}
 .nav__dropdown a:hover{opacity:1;background:var(--paper-2);}
+/* keep dropdown links readable even when the nav is in white/overlay mode */
+.nav--overlay .nav__dropdown a{color:var(--ink);}
+.nav--overlay .nav__dropdown-lead a{color:var(--forest);}
 .nav__dropdown-lead{border-bottom:1px solid var(--line-soft);margin-bottom:4px;padding-bottom:4px;}
 .nav__dropdown-lead a{font-weight:500;color:var(--forest);opacity:1;position:relative;}
 .nav__dropdown-lead a::before{content:"Primary";position:absolute;right:16px;top:50%;transform:translateY(-50%);
