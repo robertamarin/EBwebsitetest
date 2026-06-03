@@ -183,9 +183,14 @@
 
   /* ---------- past events gallery + lightbox ---------- */
   function getPast(){
-    // Prefer the curated local data (events.js) so images render reliably everywhere.
-    // Firestore gallery is used only if no local data is present.
-    return (window.pastEventsData && window.pastEventsData.length) ? window.pastEventsData : (window._firestoreGallery || []);
+    // The admin-managed gallery (Firestore) is the source of truth, so events
+    // added or removed in the admin show up on the site. The local list in
+    // events.js is only a fallback for when Firestore has nothing yet.
+    // (Previously this preferred the local list, which silently hid every
+    // gallery item added through the admin.)
+    return (window._firestoreGallery && window._firestoreGallery.length)
+      ? window._firestoreGallery
+      : (window.pastEventsData || []);
   }
   let LB = {photos:[], i:0, title:'', date:''};
   function renderGallery(){

@@ -35,9 +35,13 @@ function ebPagePrefix(name){
 window._firestoreReady = (async () => {
   if(!db) return false;
   try {
-    const snap = await getDocs(query(collection(db,'events'), where('active','==',true)));
-    if(snap.size > 0){
-      window._firestoreEvents = snap.docs.map(d=>{ const x=d.data(); return {
+    // Read all events, then hide only the ones explicitly turned off. Mirrors
+    // the admin's "active unless turned off" logic so events that never had an
+    // `active` field written still show up.
+    const snap = await getDocs(collection(db,'events'));
+    const liveDocs = snap.docs.filter(d => d.data().active !== false);
+    if(liveDocs.length > 0){
+      window._firestoreEvents = liveDocs.map(d=>{ const x=d.data(); return {
         title:x.title||'', date:x.dateDisplay||'', _sortDate:x.date||'', time:x.time||'',
         type:x.type||'', venue:x.venue||'', description:x.description||'', bookingLink:x.bookingLink||'#'
       };});
