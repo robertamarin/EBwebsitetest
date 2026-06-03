@@ -529,9 +529,18 @@ a.partner-card:hover .partner-card__go{opacity:1;}
   .exp-row__arrow{display:none;}
   .field-row{grid-template-columns:1fr;}
   .footer__grid{grid-template-columns:1fr;}
-  .ev{grid-template-columns:84px 1fr;gap:20px;row-gap:14px;}
+  .ev{grid-template-columns:60px 1fr;gap:16px;row-gap:10px;padding:22px 4px;}
+  .ev:hover{padding-left:8px;padding-right:8px;}
   .ev__action{grid-column:2;align-items:flex-start;}
-  .ev__day{font-size:2.6rem;}
+  .ev__day{font-size:2.1rem;margin:2px 0;}
+  .ev__mon,.ev__yr{font-size:.62rem;}
+  .ev__body h3{font-size:1.4rem;margin-bottom:7px;}
+  .ev__meta{gap:14px;margin-bottom:8px;}
+  .ev__meta span{font-size:.78rem;}
+  /* Keep long descriptions from making each card endless on mobile — full
+     detail lives on the booking page. */
+  .ev__body p{font-size:.9rem;line-height:1.55;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+  .ev__action .btn{padding:12px 22px;}
   .gallery{grid-template-columns:1fr 1fr;gap:12px;}
 }
 
