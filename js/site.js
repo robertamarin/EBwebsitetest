@@ -101,6 +101,33 @@
     });
   }
 
+  /* ---------- subtle parallax on feature imagery ---------- */
+  function initParallax(){
+    if(!window.matchMedia) return;
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if(!window.matchMedia('(min-width:861px)').matches) return;
+    const els = $$('.media-split__media img, .break__media img');
+    if(!els.length) return;
+    let ticking = false;
+    const update = () => {
+      const vh = window.innerHeight;
+      els.forEach(img => {
+        const r = img.getBoundingClientRect();
+        if(r.bottom < -50 || r.top > vh + 50) return;
+        // -0.5 (top of viewport) .. 0.5 (bottom). The image drifts opposite to
+        // scroll. Scaled up a touch so the translate never reveals an edge.
+        const progress = (r.top + r.height/2 - vh/2) / vh;
+        const shift = Math.max(-18, Math.min(18, progress * -28));
+        img.style.transform = `translate3d(0,${shift.toFixed(1)}px,0) scale(1.12)`;
+      });
+      ticking = false;
+    };
+    const onScroll = () => { if(!ticking){ ticking = true; requestAnimationFrame(update); } };
+    window.addEventListener('scroll', onScroll, {passive:true});
+    window.addEventListener('resize', onScroll, {passive:true});
+    update();
+  }
+
   /* ---------- events: upcoming ---------- */
   const MON = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
   function parseDate(str){
@@ -227,7 +254,7 @@
   /* ---------- boot ---------- */
   function boot(){
     initNav(); initMobileMenu(); initReveal(); initMarquee(); initStatCounters();
-    renderUpcoming(); renderGallery(); initLightboxControls(); initYear();
+    renderUpcoming(); renderGallery(); initLightboxControls(); initYear(); initParallax();
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
