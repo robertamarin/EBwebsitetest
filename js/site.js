@@ -182,15 +182,24 @@
   window.renderUpcoming = renderUpcoming;
 
   /* ---------- past events gallery + lightbox ---------- */
+  // Normalize a gallery title to a comparison key. Also folds the known admin
+  // typo "Olri Hotel" into "Orli Hotel" so the two don't show as duplicates.
+  function galKey(title){
+    let k = (title || '').toLowerCase().replace(/[^a-z0-9]/g,'');
+    if(k === 'olrihotel') k = 'orlihotel';
+    return k;
+  }
   function getPast(){
-    // The admin-managed gallery (Firestore) is the source of truth, so events
-    // added or removed in the admin show up on the site. The local list in
-    // events.js is only a fallback for when Firestore has nothing yet.
-    // (Previously this preferred the local list, which silently hid every
-    // gallery item added through the admin.)
-    return (window._firestoreGallery && window._firestoreGallery.length)
-      ? window._firestoreGallery
-      : (window.pastEventsData || []);
+    // Show every past event: the admin-managed gallery (Firestore) is the
+    // source of truth and comes first, then any legacy galleries that still
+    // only live in events.js are appended so nothing disappears. De-duped by
+    // title so an event present in both sources shows once (admin wins).
+    const remote = (window._firestoreGallery && window._firestoreGallery.length) ? window._firestoreGallery : [];
+    const local = (window.pastEventsData && window.pastEventsData.length) ? window.pastEventsData : [];
+    if(!remote.length) return local;
+    const have = new Set(remote.map(g => galKey(g.title)));
+    const extras = local.filter(g => !have.has(galKey(g.title)));
+    return remote.concat(extras);
   }
   let LB = {photos:[], i:0, title:'', date:''};
   function renderGallery(){
