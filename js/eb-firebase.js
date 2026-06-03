@@ -134,8 +134,13 @@ if(form){
     if(btn){ btn.disabled = true; btn.textContent = 'Joining…'; }
     try {
       if(db){
-        await addDoc(collection(db,'community'), {
-          name, email, phone, smsOptIn: sms, createdAt: Timestamp.now(), source:'website'
+        // Write to 'subscribers' with the exact shape the admin reads and the
+        // Firestore rules require (name, email, active, joinedAt). The old code
+        // wrote to a 'community' collection that no rule allowed, so every
+        // public signup silently failed and never reached the admin list.
+        await addDoc(collection(db,'subscribers'), {
+          name, email, phone, smsOptIn: sms, active: true,
+          source:'website', joinedAt: Timestamp.now()
         });
       }
       const wrap = document.getElementById('communityFormWrapper');

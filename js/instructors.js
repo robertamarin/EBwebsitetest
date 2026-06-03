@@ -95,22 +95,41 @@ async function loadInstructors() {
 
         grid.innerHTML = instructors.map(buildCard).join('');
 
+        // The grid carries the site-wide `reveal` class, which site.js observed
+        // while it was still EMPTY at page load. An empty, zero-height element
+        // never satisfies the reveal threshold, so the container can stay stuck
+        // at opacity:0 — hiding every instructor (this was the "instructors don't
+        // show on mobile" bug). Now that it has content, reveal it directly.
+        grid.classList.add('is-in');
+
         // Staggered fade-in as cards scroll into view. Opacity-only so the
         // CSS hover lift (transform) keeps working without conflict.
-        const cards = grid.querySelectorAll('.instructor-card');
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('revealed');
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.12 });
+        const cards = Array.from(grid.querySelectorAll('.instructor-card'));
+        const revealAll = () => cards.forEach(c => c.classList.add('revealed'));
 
-        cards.forEach((card, i) => {
-            card.style.transitionDelay = `${i * 0.08}s`;
-            observer.observe(card);
-        });
+        if ('IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('revealed');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.12 });
+
+            cards.forEach((card, i) => {
+                card.style.transitionDelay = `${i * 0.08}s`;
+                observer.observe(card);
+            });
+
+            // Safety net: some mobile browsers throttle IntersectionObserver for
+            // nodes injected after async data loads, which would leave the cards
+            // invisible forever. Force them visible shortly after render so the
+            // team always appears, animation or not.
+            setTimeout(revealAll, 1200);
+        } else {
+            revealAll();
+        }
     } catch (error) {
         console.error('Error loading instructors:', error);
         if (section) section.style.display = 'none';

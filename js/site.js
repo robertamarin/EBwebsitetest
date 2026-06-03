@@ -73,7 +73,23 @@
     const io = new IntersectionObserver((entries)=>{
       entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('is-in'); io.unobserve(e.target); } });
     }, {threshold:0.12, rootMargin:'0px 0px -8% 0px'});
-    els.forEach(e=> io.observe(e));
+    els.forEach(e=>{
+      if(e.classList.contains('is-in')) return;
+      // Reveal anything already on screen right now. Async-rendered cards
+      // (events, gallery, instructors) mount already in view, and the observer's
+      // first callback is unreliable for them on some mobile browsers — which
+      // left those sections stuck invisible. Below-the-fold elements still
+      // animate in on scroll via the observer.
+      const r = e.getBoundingClientRect();
+      if(r.top < window.innerHeight && r.bottom > 0){ e.classList.add('is-in'); return; }
+      io.observe(e);
+    });
+  }
+  // Safety net for async-rendered card lists (events / gallery): if the observer
+  // never fires for them — which can happen on mobile for nodes injected after a
+  // data fetch — force them visible so a section is never silently blank.
+  function revealFallback(scope){
+    setTimeout(()=>{ $$('.reveal', scope).forEach(e=> e.classList.add('is-in')); }, 1400);
   }
 
   /* ---------- marquee: duplicate for seamless loop ---------- */
@@ -133,6 +149,7 @@
     if(empty) empty.classList.add('hide');
     wrap.innerHTML = list.map(eventCard).join('');
     initReveal();
+    revealFallback(wrap);
   }
   window.renderEvents = renderUpcoming;
   window.renderUpcoming = renderUpcoming;
@@ -163,6 +180,7 @@
       card.addEventListener('click', ()=> openLightbox(data[parseInt(card.dataset.g,10)]));
     });
     initReveal();
+    revealFallback(wrap);
   }
   function openLightbox(g){
     const lb = $('#lightbox'); if(!lb || !g) return;
